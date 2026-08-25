@@ -4,4 +4,25 @@
     <string name="add_contact">Add contact</string>
     <string name="contacts_placeholder">Contacts will appear here</string>
     <string name="preview_contact_name">Jane Doe</string>
+
+    <!-- Bottom Navigation Labels -->
+    <string name="bottom_favourites">Favourites</string>
+    <string name="bottom_recents">Recents</string>
+    <string name="bottom_contacts">Contacts</string>
+    <string name="bottom_keypad">Keypad</string>
+    <string name="bottom_assistant">Assistant</string>
+
+    <!-- Screen Headings -->
+    <string name="title_favourites">Favourites</string>
+    <string name="title_recents">Recents</string>
+    <string name="title_contacts">Contacts</string>
+    <string name="title_keypad">Keypad</string>
+    <string name="title_assistant">Assistant</string>
+
+    <!-- Screen Descriptions -->
+    <string name="description_favourites">Your priority contacts will appear here.</string>
+    <string name="description_recents">Your recent calls will appear here.</string>
+    <string name="description_contacts">Your contacts will appear here.</string>
+    <string name="description_keypad">Search contacts or enter a number.</string>
+    <string name="description_assistant">Reminders and smart actions will appear here.</string>
 </resources>

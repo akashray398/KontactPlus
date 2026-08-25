@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,78 +24,67 @@ import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactsScreen(
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-                }
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(SpaceMedium)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+    Column(
+        modifier = modifier
+            .padding(SpaceMedium)
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Text(
+            text = stringResource(R.string.title_contacts),
+            style = MaterialTheme.typography.headlineLarge
+        )
+
+        Text(
+            text = stringResource(R.string.tagline),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.padding(SpaceLarge))
+
+        KontactCard(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { /* TODO: Navigate to details */ }
         ) {
-            Text(
-                text = stringResource(R.string.tagline),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.padding(SpaceLarge))
-
-            KontactCard(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { /* TODO: Navigate to details */ }
+            Row(
+                modifier = Modifier
+                    .padding(SpaceMedium)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(SpaceMedium)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    ContactAvatar(displayName = stringResource(R.string.preview_contact_name))
-                    Spacer(modifier = Modifier.width(SpaceMedium))
-                    Text(
-                        text = stringResource(R.string.preview_contact_name),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+                ContactAvatar(displayName = stringResource(R.string.preview_contact_name))
+                Spacer(modifier = Modifier.width(SpaceMedium))
+                Text(
+                    text = stringResource(R.string.preview_contact_name),
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
-
-            Spacer(modifier = Modifier.padding(SpaceMedium))
-
-            Text(
-                text = stringResource(R.string.contacts_placeholder),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            KontactPrimaryButton(
-                onClick = { /* TODO: Add contact */ },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = stringResource(R.string.add_contact))
-            }
-            
-            Spacer(modifier = Modifier.padding(SpaceSmall))
         }
+
+        Spacer(modifier = Modifier.padding(SpaceMedium))
+
+        Text(
+            text = stringResource(R.string.description_contacts),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        KontactPrimaryButton(
+            onClick = { /* TODO: Add contact */ },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(text = stringResource(R.string.add_contact))
+        }
+        
+        Spacer(modifier = Modifier.padding(SpaceSmall))
     }
 }
 
