@@ -1,6 +1,5 @@
-package com.example.kontactplus.ui.theme
+package com.akash.kontactplus.core.designsystem.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,32 +11,45 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = BrandViolet,
+    onPrimary = DarkOnBackground,
+    primaryContainer = BrandViolet,
+    onPrimaryContainer = DarkOnBackground,
+    secondary = ElectricCyan,
+    onSecondary = DarkBackground,
+    tertiary = SuccessGreen,
+    error = ErrorRed,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurface,
+    outline = DarkOutline
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = BrandViolet,
+    onPrimary = LightSurface,
+    primaryContainer = BrandViolet,
+    onPrimaryContainer = LightSurface,
+    secondary = ElectricCyan,
+    onSecondary = LightOnBackground,
+    tertiary = SuccessGreen,
+    error = ErrorRed,
+    background = LightBackground,
+    onBackground = LightOnBackground,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurface,
+    outline = LightOutline
 )
 
 @Composable
 fun KontactPlusTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,7 +57,6 @@ fun KontactPlusTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
@@ -53,6 +64,7 @@ fun KontactPlusTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }

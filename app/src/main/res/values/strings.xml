@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Kontact++</string>
+    <string name="tagline">Connect smarter. Remember better.</string>
+    <string name="add_contact">Add contact</string>
+    <string name="contacts_placeholder">Contacts will appear here</string>
+    <string name="preview_contact_name">Jane Doe</string>
 </resources>

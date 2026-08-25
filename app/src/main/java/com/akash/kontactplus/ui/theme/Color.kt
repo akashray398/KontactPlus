@@ -1,4 +1,4 @@
-package com.example.kontactplus.ui.theme
+package com.akash.kontactplus.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
