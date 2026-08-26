@@ -25,4 +25,19 @@
     <string name="description_contacts">Your contacts will appear here.</string>
     <string name="description_keypad">Search contacts or enter a number.</string>
     <string name="description_assistant">Reminders and smart actions will appear here.</string>
+
+    <!-- Contacts Permission -->
+    <string name="contacts_permission_title">Access your contacts</string>
+    <string name="contacts_permission_description">Kontact++ uses contact access to display and search your contacts locally on this device.</string>
+    <string name="contacts_permission_privacy_note">Privacy first: your contacts are never uploaded to any server.</string>
+    <string name="contacts_permission_allow">Allow contacts access</string>
+    <string name="contacts_permission_denied_title">Permission needed</string>
+    <string name="contacts_permission_denied_description">To show your contacts, this feature needs access to your device contacts.</string>
+    <string name="contacts_permission_retry">Try again</string>
+    <string name="contacts_permission_permanently_denied_title">Enable in Settings</string>
+    <string name="contacts_permission_permanently_denied_description">Contact access has been disabled. Please enable it in the application settings to use this feature.</string>
+    <string name="contacts_permission_open_settings">Open settings</string>
+    <string name="contacts_permission_checking">Checking permission…</string>
+    <string name="contacts_permission_granted">Contacts access granted</string>
+    <string name="contacts_placeholder_description">Your contacts will appear here.</string>
 </resources>

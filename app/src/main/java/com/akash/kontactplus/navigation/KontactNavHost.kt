@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.akash.kontactplus.feature.assistant.presentation.AssistantScreen
-import com.akash.kontactplus.feature.contacts.presentation.ContactsScreen
+import com.akash.kontactplus.feature.contacts.presentation.ContactsRoute
 import com.akash.kontactplus.feature.dialpad.presentation.DialpadScreen
 import com.akash.kontactplus.feature.favourites.presentation.FavouritesScreen
 import com.akash.kontactplus.feature.recents.presentation.RecentsScreen
@@ -30,7 +30,7 @@ fun KontactNavHost(
         }
         
         composable(route = KontactDestination.Contacts.route) {
-            ContactsScreen()
+            ContactsRoute()
         }
         
         composable(route = KontactDestination.Dialpad.route) {
