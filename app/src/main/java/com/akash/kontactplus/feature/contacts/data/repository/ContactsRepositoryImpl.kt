@@ -23,4 +23,15 @@ class ContactsRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getContact(lookupKey: String): Result<Contact?> {
+        return try {
+            val contact = dataSource.getContact(lookupKey)
+            Result.success(contact)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

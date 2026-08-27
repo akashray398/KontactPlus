@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
+import com.akash.kontactplus.feature.contacts.domain.model.ContactSortOrder
 
 @Composable
 fun ContactsScreen(
@@ -48,6 +50,10 @@ fun ContactsScreen(
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit,
     onRetryLoading: () -> Unit,
+    onSearchQueryChanged: (String) -> Unit,
+    onClearSearch: () -> Unit,
+    onSortOrderChanged: (ContactSortOrder) -> Unit,
+    onContactClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -55,68 +61,192 @@ fun ContactsScreen(
             .padding(horizontal = SpaceMedium)
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top
     ) {
         when (uiState.permissionState) {
             ContactsPermissionState.Checking -> {
-                CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                Spacer(modifier = Modifier.padding(SpaceSmall))
-                Text(text = stringResource(R.string.contacts_permission_checking))
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.padding(SpaceSmall))
+                    Text(text = stringResource(R.string.contacts_permission_checking))
+                }
             }
 
             ContactsPermissionState.NotRequested -> {
-                PermissionContent(
-                    title = stringResource(R.string.contacts_permission_title),
-                    description = stringResource(R.string.contacts_permission_description),
-                    privacyNote = stringResource(R.string.contacts_permission_privacy_note),
-                    buttonLabel = stringResource(R.string.contacts_permission_allow),
-                    onButtonClick = onRequestPermission
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    PermissionContent(
+                        title = stringResource(R.string.contacts_permission_title),
+                        description = stringResource(R.string.contacts_permission_description),
+                        privacyNote = stringResource(R.string.contacts_permission_privacy_note),
+                        buttonLabel = stringResource(R.string.contacts_permission_allow),
+                        onButtonClick = onRequestPermission
+                    )
+                }
             }
 
             ContactsPermissionState.Denied -> {
-                PermissionContent(
-                    title = stringResource(R.string.contacts_permission_denied_title),
-                    description = stringResource(R.string.contacts_permission_denied_description),
-                    buttonLabel = stringResource(R.string.contacts_permission_retry),
-                    onButtonClick = onRequestPermission
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    PermissionContent(
+                        title = stringResource(R.string.contacts_permission_denied_title),
+                        description = stringResource(R.string.contacts_permission_denied_description),
+                        buttonLabel = stringResource(R.string.contacts_permission_retry),
+                        onButtonClick = onRequestPermission
+                    )
+                }
             }
 
             ContactsPermissionState.PermanentlyDenied -> {
-                PermissionContent(
-                    title = stringResource(R.string.contacts_permission_permanently_denied_title),
-                    description = stringResource(R.string.contacts_permission_permanently_denied_description),
-                    buttonLabel = stringResource(R.string.contacts_permission_open_settings),
-                    onButtonClick = onOpenSettings
-                )
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    PermissionContent(
+                        title = stringResource(R.string.contacts_permission_permanently_denied_title),
+                        description = stringResource(R.string.contacts_permission_permanently_denied_description),
+                        buttonLabel = stringResource(R.string.contacts_permission_open_settings),
+                        onButtonClick = onOpenSettings
+                    )
+                }
             }
 
             ContactsPermissionState.Granted -> {
-                when {
-                    uiState.isLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                        Spacer(modifier = Modifier.padding(SpaceSmall))
-                        Text(text = stringResource(R.string.contacts_loading))
-                    }
-                    uiState.errorMessageRes != null -> {
-                        InfoContent(
-                            icon = Icons.Default.ErrorOutline,
-                            title = stringResource(R.string.contacts_load_error_title),
-                            description = stringResource(uiState.errorMessageRes),
-                            buttonLabel = stringResource(R.string.contacts_retry),
-                            onButtonClick = onRetryLoading
+                GrantedContent(
+                    uiState = uiState,
+                    onRetryLoading = onRetryLoading,
+                    onSearchQueryChanged = onSearchQueryChanged,
+                    onClearSearch = onClearSearch,
+                    onSortOrderChanged = onSortOrderChanged,
+                    onContactClick = onContactClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GrantedContent(
+    uiState: ContactsUiState,
+    onRetryLoading: () -> Unit,
+    onSearchQueryChanged: (String) -> Unit,
+    onClearSearch: () -> Unit,
+    onSortOrderChanged: (ContactSortOrder) -> Unit,
+    onContactClick: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.padding(SpaceSmall))
+        Text(
+            text = stringResource(R.string.title_contacts),
+            style = MaterialTheme.typography.headlineLarge
+        )
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ContactsSearchBar(
+                query = uiState.searchQuery,
+                onQueryChanged = onSearchQueryChanged,
+                onClearQuery = onClearSearch,
+                modifier = Modifier.weight(1f)
+            )
+            ContactsSortMenu(
+                selectedSortOrder = uiState.sortOrder,
+                onSortOrderChanged = onSortOrderChanged
+            )
+        }
+
+        when {
+            uiState.isLoading -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                    Spacer(modifier = Modifier.padding(SpaceSmall))
+                    Text(text = stringResource(R.string.contacts_loading))
+                }
+            }
+            uiState.errorMessageRes != null -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    InfoContent(
+                        icon = Icons.Default.ErrorOutline,
+                        title = stringResource(R.string.contacts_load_error_title),
+                        description = stringResource(uiState.errorMessageRes),
+                        buttonLabel = stringResource(R.string.contacts_retry),
+                        onButtonClick = onRetryLoading
+                    )
+                }
+            }
+            uiState.visibleContacts.isEmpty() && uiState.searchQuery.isNotBlank() -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    InfoContent(
+                        icon = Icons.Default.SearchOff,
+                        title = stringResource(R.string.contacts_no_results_title),
+                        description = stringResource(R.string.contacts_no_results_description),
+                        buttonLabel = stringResource(R.string.contacts_clear_search_action),
+                        onButtonClick = onClearSearch
+                    )
+                }
+            }
+            uiState.visibleContacts.isEmpty() && uiState.hasLoadedContacts -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    InfoContent(
+                        icon = Icons.Default.ContactPage,
+                        title = stringResource(R.string.contacts_empty_title),
+                        description = stringResource(R.string.contacts_empty_description)
+                    )
+                }
+            }
+            else -> {
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.contacts_count,
+                        uiState.visibleContacts.size,
+                        uiState.visibleContacts.size
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = SpaceMedium),
+                    verticalArrangement = Arrangement.spacedBy(SpaceSmall)
+                ) {
+                    items(
+                        items = uiState.visibleContacts,
+                        key = { "${it.lookupKey}_${it.id}" }
+                    ) { contact ->
+                        ContactListItem(
+                            contact = contact,
+                            onClick = { onContactClick(contact.lookupKey) }
                         )
-                    }
-                    uiState.contacts.isEmpty() && uiState.hasLoadedContacts -> {
-                        InfoContent(
-                            icon = Icons.Default.ContactPage,
-                            title = stringResource(R.string.contacts_empty_title),
-                            description = stringResource(R.string.contacts_empty_description)
-                        )
-                    }
-                    else -> {
-                        ContactsList(contacts = uiState.contacts)
                     }
                 }
             }
@@ -125,49 +255,14 @@ fun ContactsScreen(
 }
 
 @Composable
-private fun ContactsList(
-    contacts: List<Contact>,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.padding(SpaceMedium))
-        Text(
-            text = stringResource(R.string.title_contacts),
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Text(
-            text = pluralStringResource(
-                R.plurals.contacts_count,
-                contacts.size,
-                contacts.size
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = SpaceMedium),
-            verticalArrangement = Arrangement.spacedBy(SpaceSmall)
-        ) {
-            items(
-                items = contacts,
-                key = { "${it.lookupKey}_${it.id}" }
-            ) { contact ->
-                ContactListItem(contact = contact)
-            }
-        }
-    }
-}
-
-@Composable
 private fun ContactListItem(
     contact: Contact,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     KontactCard(
         modifier = modifier.fillMaxWidth(),
-        onClick = null // Not implemented yet
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -292,7 +387,7 @@ class ContactsPreviewParameterProvider : PreviewParameterProvider<ContactsUiStat
         ContactsUiState(
             permissionState = ContactsPermissionState.Granted, 
             hasLoadedContacts = true,
-            contacts = listOf(
+            visibleContacts = listOf(
                 Contact(1, "k1", "Akash Patel", listOf("1234567890", "0987654321")),
                 Contact(2, "k2", "Jane Doe", listOf("9876543210")),
                 Contact(3, "k3", "", listOf("1112223333"))
@@ -301,7 +396,13 @@ class ContactsPreviewParameterProvider : PreviewParameterProvider<ContactsUiStat
         ContactsUiState(
             permissionState = ContactsPermissionState.Granted, 
             hasLoadedContacts = true,
-            contacts = emptyList()
+            visibleContacts = emptyList()
+        ),
+        ContactsUiState(
+            permissionState = ContactsPermissionState.Granted, 
+            hasLoadedContacts = true,
+            visibleContacts = emptyList(),
+            searchQuery = "Unknown"
         ),
         ContactsUiState(
             permissionState = ContactsPermissionState.Granted, 
@@ -320,7 +421,11 @@ private fun ContactsScreenPreview(
             uiState = state,
             onRequestPermission = {},
             onOpenSettings = {},
-            onRetryLoading = {}
+            onRetryLoading = {},
+            onSearchQueryChanged = {},
+            onClearSearch = {},
+            onSortOrderChanged = {},
+            onContactClick = {}
         )
     }
 }

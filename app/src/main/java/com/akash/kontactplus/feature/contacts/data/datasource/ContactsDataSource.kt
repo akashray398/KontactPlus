@@ -11,4 +11,11 @@ interface ContactsDataSource {
      * @return A list of [Contact] objects.
      */
     suspend fun getContacts(): List<Contact>
+
+    /**
+     * Fetches a single contact by its lookup key.
+     * @param lookupKey The lookup key of the contact.
+     * @return The [Contact] if found, null otherwise.
+     */
+    suspend fun getContact(lookupKey: String): Contact?
 }

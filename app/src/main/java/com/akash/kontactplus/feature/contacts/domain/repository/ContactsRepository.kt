@@ -11,4 +11,11 @@ interface ContactsRepository {
      * @return A [Result] containing a list of [Contact]s or an error.
      */
     suspend fun getContacts(): Result<List<Contact>>
+
+    /**
+     * Retrieves a single contact by its lookup key.
+     * @param lookupKey The lookup key of the contact.
+     * @return A [Result] containing the [Contact] if found, null if not found, or an error.
+     */
+    suspend fun getContact(lookupKey: String): Result<Contact?>
 }

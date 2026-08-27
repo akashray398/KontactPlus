@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun ContactsRoute(
+    onContactClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ContactsViewModel = hiltViewModel()
 ) {
@@ -87,6 +88,10 @@ fun ContactsRoute(
         onRetryLoading = {
             viewModel.retryLoadingContacts()
         },
+        onSearchQueryChanged = viewModel::onSearchQueryChanged,
+        onClearSearch = viewModel::onClearSearch,
+        onSortOrderChanged = viewModel::onSortOrderChanged,
+        onContactClick = onContactClick,
         modifier = modifier
     )
 }

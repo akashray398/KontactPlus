@@ -4,6 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akash.kontactplus.R
+import com.akash.kontactplus.feature.contacts.domain.model.Contact
+import com.akash.kontactplus.feature.contacts.domain.model.ContactSortOrder
+import com.akash.kontactplus.feature.contacts.domain.usecase.FilterContactsUseCase
 import com.akash.kontactplus.feature.contacts.domain.usecase.GetContactsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -17,19 +20,22 @@ import javax.inject.Inject
 @HiltViewModel
 class ContactsViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val getContactsUseCase: GetContactsUseCase
+    private val getContactsUseCase: GetContactsUseCase,
+    private val filterContactsUseCase: FilterContactsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ContactsUiState())
     val uiState: StateFlow<ContactsUiState> = _uiState.asStateFlow()
 
+    private var allContacts: List<Contact> = emptyList()
     private var loadContactsJob: Job? = null
 
-    private var hasRequestedPermission: Boolean
-        get() = savedStateHandle.get<Boolean>(KEY_HAS_REQUESTED_PERMISSION) ?: false
-        set(value) {
-            savedStateHandle[KEY_HAS_REQUESTED_PERMISSION] = value
-        }
+    init {
+        // Restore search query and sort order from saved state if needed
+        val savedQuery = savedStateHandle.get<String>(KEY_SEARCH_QUERY) ?: ""
+        val savedSortOrder = savedStateHandle.get<ContactSortOrder>(KEY_SORT_ORDER) ?: ContactSortOrder.NameAscending
+        _uiState.update { it.copy(searchQuery = savedQuery, sortOrder = savedSortOrder) }
+    }
 
     fun onPermissionStatusChecked(isGranted: Boolean, shouldShowRationale: Boolean) {
         val newState = when {
@@ -72,6 +78,22 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        savedStateHandle[KEY_SEARCH_QUERY] = query
+        applyFilter()
+    }
+
+    fun onClearSearch() {
+        onSearchQueryChanged("")
+    }
+
+    fun onSortOrderChanged(sortOrder: ContactSortOrder) {
+        _uiState.update { it.copy(sortOrder = sortOrder) }
+        savedStateHandle[KEY_SORT_ORDER] = sortOrder
+        applyFilter()
+    }
+
     private fun loadContacts() {
         if (_uiState.value.isLoading) return
         
@@ -81,15 +103,15 @@ class ContactsViewModel @Inject constructor(
             
             getContactsUseCase().fold(
                 onSuccess = { contacts ->
-                    // Double check permission before publishing data
                     if (_uiState.value.permissionState == ContactsPermissionState.Granted) {
+                        allContacts = contacts
                         _uiState.update { 
                             it.copy(
-                                contacts = contacts, 
                                 isLoading = false, 
                                 hasLoadedContacts = true
                             ) 
                         }
+                        applyFilter()
                     }
                 },
                 onFailure = {
@@ -106,11 +128,21 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    private fun applyFilter() {
+        val filtered = filterContactsUseCase(
+            contacts = allContacts,
+            query = _uiState.value.searchQuery,
+            sortOrder = _uiState.value.sortOrder
+        )
+        _uiState.update { it.copy(visibleContacts = filtered) }
+    }
+
     private fun clearContacts() {
         loadContactsJob?.cancel()
+        allContacts = emptyList()
         _uiState.update { 
             it.copy(
-                contacts = emptyList(), 
+                visibleContacts = emptyList(), 
                 hasLoadedContacts = false,
                 isLoading = false,
                 errorMessageRes = null
@@ -118,7 +150,15 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
+    private var hasRequestedPermission: Boolean
+        get() = savedStateHandle.get<Boolean>(KEY_HAS_REQUESTED_PERMISSION) ?: false
+        set(value) {
+            savedStateHandle[KEY_HAS_REQUESTED_PERMISSION] = value
+        }
+
     companion object {
         private const val KEY_HAS_REQUESTED_PERMISSION = "has_requested_permission"
+        private const val KEY_SEARCH_QUERY = "search_query"
+        private const val KEY_SORT_ORDER = "sort_order"
     }
 }

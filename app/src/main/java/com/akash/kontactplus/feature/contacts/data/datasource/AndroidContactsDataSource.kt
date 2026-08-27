@@ -2,6 +2,7 @@ package com.akash.kontactplus.feature.contacts.data.datasource
 
 import android.content.ContentResolver
 import android.content.Context
+import android.database.Cursor
 import android.provider.ContactsContract
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,16 +17,16 @@ class AndroidContactsDataSource @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ContactsDataSource {
 
+    private val projection = arrayOf(
+        ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+        ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY,
+        ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
+        ContactsContract.CommonDataKinds.Phone.NUMBER,
+        ContactsContract.CommonDataKinds.Phone.PHOTO_URI
+    )
+
     override suspend fun getContacts(): List<Contact> = withContext(Dispatchers.IO) {
         val resolver: ContentResolver = context.contentResolver
-        val projection = arrayOf(
-            ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
-            ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY,
-            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY,
-            ContactsContract.CommonDataKinds.Phone.NUMBER,
-            ContactsContract.CommonDataKinds.Phone.PHOTO_URI
-        )
-
         val cursor = resolver.query(
             ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
             projection,
@@ -34,40 +35,54 @@ class AndroidContactsDataSource @Inject constructor(
             "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY} COLLATE NOCASE ASC"
         )
 
-        cursor?.use { c ->
-            val idIndex = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
-            val lookupIndex = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY)
-            val nameIndex = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY)
-            val numberIndex = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
-            val photoIndex = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI)
-
-            val contactMap = mutableMapOf<Long, ContactBuilder>()
-
-            while (c.moveToNext()) {
-                val id = c.getLong(idIndex)
-                val lookupKey = c.getString(lookupIndex) ?: ""
-                val name = c.getString(nameIndex) ?: ""
-                val number = c.getString(numberIndex)?.trim() ?: ""
-                val photoUri = c.getString(photoIndex)
-
-                if (number.isNotBlank()) {
-                    val builder = contactMap.getOrPut(id) {
-                        ContactBuilder(id, lookupKey, name, photoUri)
-                    }
-                    if (builder.phoneNumbers.none { it == number }) {
-                        builder.phoneNumbers.add(number)
-                    }
-                }
-            }
-
-            contactMap.values.map { it.build() }
-                .sortedWith(compareBy({ it.displayName.isBlank() }, { it.displayName.lowercase() }))
-        } ?: emptyList()
+        cursor?.use { mapCursorToContacts(it) } ?: emptyList()
     }
 
-    /**
-     * Helper class to aggregate multiple phone numbers for a single contact.
-     */
+    override suspend fun getContact(lookupKey: String): Contact? = withContext(Dispatchers.IO) {
+        if (lookupKey.isBlank()) return@withContext null
+        
+        val resolver: ContentResolver = context.contentResolver
+        val cursor = resolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            projection,
+            "${ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY} = ?",
+            arrayOf(lookupKey),
+            null
+        )
+
+        cursor?.use { mapCursorToContacts(it).firstOrNull() }
+    }
+
+    private fun mapCursorToContacts(cursor: Cursor): List<Contact> {
+        val idIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID)
+        val lookupIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY)
+        val nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY)
+        val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+        val photoIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI)
+
+        val contactMap = mutableMapOf<Long, ContactBuilder>()
+
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(idIndex)
+            val lookup = cursor.getString(lookupIndex) ?: ""
+            val name = cursor.getString(nameIndex) ?: ""
+            val number = cursor.getString(numberIndex)?.trim() ?: ""
+            val photoUri = cursor.getString(photoIndex)
+
+            if (number.isNotBlank()) {
+                val builder = contactMap.getOrPut(id) {
+                    ContactBuilder(id, lookup, name, photoUri)
+                }
+                if (builder.phoneNumbers.none { it == number }) {
+                    builder.phoneNumbers.add(number)
+                }
+            }
+        }
+
+        return contactMap.values.map { it.build() }
+            .sortedWith(compareBy({ it.displayName.isBlank() }, { it.displayName.lowercase() }))
+    }
+
     private class ContactBuilder(
         val id: Long,
         val lookupKey: String,
