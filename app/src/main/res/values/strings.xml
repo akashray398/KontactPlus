@@ -40,4 +40,19 @@
     <string name="contacts_permission_checking">Checking permission…</string>
     <string name="contacts_permission_granted">Contacts access granted</string>
     <string name="contacts_placeholder_description">Your contacts will appear here.</string>
+
+    <!-- Contacts Loading & Error -->
+    <string name="contacts_loading">Loading contacts…</string>
+    <string name="contacts_load_error_title">Failed to load contacts</string>
+    <string name="contacts_load_error_description">Something went wrong while retrieving your contacts. Please check your permissions and try again.</string>
+    <string name="contacts_retry">Try again</string>
+    <string name="contacts_empty_title">No contacts found</string>
+    <string name="contacts_empty_description">No contacts with phone numbers were found on this device.</string>
+    <string name="contacts_unnamed">Unnamed contact</string>
+    <string name="contacts_more_numbers">+%d more</string>
+
+    <plurals name="contacts_count">
+        <item quantity="one">%d contact</item>
+        <item quantity="other">%d contacts</item>
+    </plurals>
 </resources>

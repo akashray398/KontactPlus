@@ -84,6 +84,9 @@ fun ContactsRoute(
         onOpenSettings = {
             context.openSettings()
         },
+        onRetryLoading = {
+            viewModel.retryLoadingContacts()
+        },
         modifier = modifier
     )
 }

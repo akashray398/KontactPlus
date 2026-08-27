@@ -2,6 +2,7 @@ package com.akash.kontactplus.feature.contacts.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContactPage
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -18,8 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -32,26 +40,26 @@ import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
 import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
+import com.akash.kontactplus.feature.contacts.domain.model.Contact
 
 @Composable
 fun ContactsScreen(
     uiState: ContactsUiState,
     onRequestPermission: () -> Unit,
     onOpenSettings: () -> Unit,
+    onRetryLoading: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
-            .padding(SpaceMedium)
+            .padding(horizontal = SpaceMedium)
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         when (uiState.permissionState) {
             ContactsPermissionState.Checking -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp)
-                )
+                CircularProgressIndicator(modifier = Modifier.size(48.dp))
                 Spacer(modifier = Modifier.padding(SpaceSmall))
                 Text(text = stringResource(R.string.contacts_permission_checking))
             }
@@ -85,7 +93,121 @@ fun ContactsScreen(
             }
 
             ContactsPermissionState.Granted -> {
-                GrantedContent()
+                when {
+                    uiState.isLoading -> {
+                        CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                        Spacer(modifier = Modifier.padding(SpaceSmall))
+                        Text(text = stringResource(R.string.contacts_loading))
+                    }
+                    uiState.errorMessageRes != null -> {
+                        InfoContent(
+                            icon = Icons.Default.ErrorOutline,
+                            title = stringResource(R.string.contacts_load_error_title),
+                            description = stringResource(uiState.errorMessageRes),
+                            buttonLabel = stringResource(R.string.contacts_retry),
+                            onButtonClick = onRetryLoading
+                        )
+                    }
+                    uiState.contacts.isEmpty() && uiState.hasLoadedContacts -> {
+                        InfoContent(
+                            icon = Icons.Default.ContactPage,
+                            title = stringResource(R.string.contacts_empty_title),
+                            description = stringResource(R.string.contacts_empty_description)
+                        )
+                    }
+                    else -> {
+                        ContactsList(contacts = uiState.contacts)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContactsList(
+    contacts: List<Contact>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.padding(SpaceMedium))
+        Text(
+            text = stringResource(R.string.title_contacts),
+            style = MaterialTheme.typography.headlineLarge
+        )
+        Text(
+            text = pluralStringResource(
+                R.plurals.contacts_count,
+                contacts.size,
+                contacts.size
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = SpaceMedium),
+            verticalArrangement = Arrangement.spacedBy(SpaceSmall)
+        ) {
+            items(
+                items = contacts,
+                key = { "${it.lookupKey}_${it.id}" }
+            ) { contact ->
+                ContactListItem(contact = contact)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContactListItem(
+    contact: Contact,
+    modifier: Modifier = Modifier
+) {
+    KontactCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = null // Not implemented yet
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(SpaceMedium)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ContactAvatar(
+                displayName = contact.displayName.ifBlank { stringResource(R.string.contacts_unnamed) }
+            )
+            Spacer(modifier = Modifier.width(SpaceMedium))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = contact.displayName.ifBlank { stringResource(R.string.contacts_unnamed) },
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (contact.phoneNumbers.isNotEmpty()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = contact.phoneNumbers.first(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (contact.phoneNumbers.size > 1) {
+                            Text(
+                                text = " " + stringResource(
+                                    R.string.contacts_more_numbers,
+                                    contact.phoneNumbers.size - 1
+                                ),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -99,13 +221,32 @@ private fun PermissionContent(
     onButtonClick: () -> Unit,
     privacyNote: String? = null
 ) {
+    InfoContent(
+        icon = Icons.Default.Lock,
+        title = title,
+        description = description,
+        privacyNote = privacyNote,
+        buttonLabel = buttonLabel,
+        onButtonClick = onButtonClick
+    )
+}
+
+@Composable
+private fun InfoContent(
+    icon: ImageVector,
+    title: String,
+    description: String,
+    buttonLabel: String? = null,
+    onButtonClick: (() -> Unit)? = null,
+    privacyNote: String? = null
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
-            imageVector = Icons.Default.Lock,
+            imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -132,100 +273,54 @@ private fun PermissionContent(
                 color = MaterialTheme.colorScheme.outline
             )
         }
-        Spacer(modifier = Modifier.padding(SpaceLarge))
-        KontactPrimaryButton(
-            onClick = onButtonClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = buttonLabel)
-        }
-    }
-}
-
-@Composable
-private fun GrantedContent() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Text(
-            text = stringResource(R.string.title_contacts),
-            style = MaterialTheme.typography.headlineLarge
-        )
-        Text(
-            text = stringResource(R.string.tagline),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.padding(SpaceLarge))
-
-        KontactCard(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { /* TODO */ }
-        ) {
-            Row(
-                modifier = Modifier
-                    .padding(SpaceMedium)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        if (buttonLabel != null && onButtonClick != null) {
+            Spacer(modifier = Modifier.padding(SpaceLarge))
+            KontactPrimaryButton(
+                onClick = onButtonClick,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                ContactAvatar(displayName = stringResource(R.string.preview_contact_name))
-                Spacer(modifier = Modifier.width(SpaceMedium))
-                Text(
-                    text = stringResource(R.string.preview_contact_name),
-                    style = MaterialTheme.typography.titleMedium
-                )
+                Text(text = buttonLabel)
             }
         }
-
-        Spacer(modifier = Modifier.padding(SpaceMedium))
-
-        Text(
-            text = stringResource(R.string.contacts_permission_granted),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        
-        Text(
-            text = stringResource(R.string.contacts_placeholder_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.outline
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        KontactPrimaryButton(
-            onClick = { /* TODO */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = stringResource(R.string.add_contact))
-        }
-        Spacer(modifier = Modifier.padding(SpaceSmall))
     }
 }
 
-class ContactsPermissionPreviewParameterProvider : PreviewParameterProvider<ContactsPermissionState> {
+class ContactsPreviewParameterProvider : PreviewParameterProvider<ContactsUiState> {
     override val values = sequenceOf(
-        ContactsPermissionState.Checking,
-        ContactsPermissionState.NotRequested,
-        ContactsPermissionState.Denied,
-        ContactsPermissionState.PermanentlyDenied,
-        ContactsPermissionState.Granted
+        ContactsUiState(permissionState = ContactsPermissionState.NotRequested),
+        ContactsUiState(permissionState = ContactsPermissionState.Granted, isLoading = true),
+        ContactsUiState(
+            permissionState = ContactsPermissionState.Granted, 
+            hasLoadedContacts = true,
+            contacts = listOf(
+                Contact(1, "k1", "Akash Patel", listOf("1234567890", "0987654321")),
+                Contact(2, "k2", "Jane Doe", listOf("9876543210")),
+                Contact(3, "k3", "", listOf("1112223333"))
+            )
+        ),
+        ContactsUiState(
+            permissionState = ContactsPermissionState.Granted, 
+            hasLoadedContacts = true,
+            contacts = emptyList()
+        ),
+        ContactsUiState(
+            permissionState = ContactsPermissionState.Granted, 
+            errorMessageRes = R.string.contacts_load_error_description
+        )
     )
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun ContactsScreenPreview(
-    @PreviewParameter(ContactsPermissionPreviewParameterProvider::class) state: ContactsPermissionState
+    @PreviewParameter(ContactsPreviewParameterProvider::class) state: ContactsUiState
 ) {
     KontactPlusTheme {
         ContactsScreen(
-            uiState = ContactsUiState(permissionState = state),
+            uiState = state,
             onRequestPermission = {},
-            onOpenSettings = {}
+            onOpenSettings = {},
+            onRetryLoading = {}
         )
     }
 }
