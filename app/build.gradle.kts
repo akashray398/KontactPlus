@@ -5,6 +5,10 @@
     id("com.google.dagger.hilt.android")
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     namespace = "com.akash.kontactplus"
     compileSdk {
@@ -54,6 +58,12 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+    testImplementation(libs.room.testing)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

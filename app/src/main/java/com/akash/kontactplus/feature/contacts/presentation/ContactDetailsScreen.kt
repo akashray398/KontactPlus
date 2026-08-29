@@ -9,12 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,6 +48,7 @@ fun ContactDetailsScreen(
     uiState: ContactDetailsUiState,
     onBackClick: () -> Unit,
     onPhoneNumberClick: (String) -> Unit,
+    onFavouriteClick: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -59,6 +61,22 @@ fun ContactDetailsScreen(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = stringResource(R.string.contact_details_back)
                     )
+                }
+            },
+            actions = {
+                if (uiState is ContactDetailsUiState.Success) {
+                    IconButton(
+                        onClick = onFavouriteClick,
+                        enabled = !uiState.isFavouriteActionInProgress
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.isFavourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                            contentDescription = stringResource(
+                                if (uiState.isFavourite) R.string.favourite_remove else R.string.favourite_add
+                            ),
+                            tint = if (uiState.isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
         )
@@ -238,6 +256,24 @@ private fun ContactDetailsSuccessPreview() {
             ),
             onBackClick = {},
             onPhoneNumberClick = {},
+            onFavouriteClick = {},
+            onRetry = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ContactDetailsFavouritePreview() {
+    KontactPlusTheme {
+        ContactDetailsScreen(
+            uiState = ContactDetailsUiState.Success(
+                contact = Contact(1, "k1", "Akash Patel", listOf("1234567890")),
+                isFavourite = true
+            ),
+            onBackClick = {},
+            onPhoneNumberClick = {},
+            onFavouriteClick = {},
             onRetry = {}
         )
     }
@@ -251,19 +287,7 @@ private fun ContactDetailsLoadingPreview() {
             uiState = ContactDetailsUiState.Loading,
             onBackClick = {},
             onPhoneNumberClick = {},
-            onRetry = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ContactDetailsNotFoundPreview() {
-    KontactPlusTheme(darkTheme = true) {
-        ContactDetailsScreen(
-            uiState = ContactDetailsUiState.NotFound,
-            onBackClick = {},
-            onPhoneNumberClick = {},
+            onFavouriteClick = {},
             onRetry = {}
         )
     }

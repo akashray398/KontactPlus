@@ -24,6 +24,7 @@ import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 @Composable
 fun DialpadScreen(
     modifier: Modifier = Modifier,
+    prefilledNumber: String? = null
 ) {
     Column(
         modifier = modifier.fillMaxSize(),
@@ -45,7 +46,7 @@ fun DialpadScreen(
         )
         
         Text(
-            text = stringResource(R.string.description_keypad),
+            text = prefilledNumber ?: stringResource(R.string.description_keypad),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -57,5 +58,13 @@ fun DialpadScreen(
 private fun DialpadScreenPreview() {
     KontactPlusTheme {
         DialpadScreen()
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DialpadScreenPrefilledPreview() {
+    KontactPlusTheme {
+        DialpadScreen(prefilledNumber = "+123456789")
     }
 }

@@ -8,7 +8,12 @@ import com.akash.kontactplus.feature.contacts.domain.model.Contact
  */
 sealed interface ContactDetailsUiState {
     data object Loading : ContactDetailsUiState
-    data class Success(val contact: Contact) : ContactDetailsUiState
+    data class Success(
+        val contact: Contact,
+        val isFavourite: Boolean = false,
+        val isFavouriteActionInProgress: Boolean = false,
+        @StringRes val favouriteActionErrorRes: Int? = null
+    ) : ContactDetailsUiState
     data object NotFound : ContactDetailsUiState
     data class Error(@StringRes val messageRes: Int) : ContactDetailsUiState
 }

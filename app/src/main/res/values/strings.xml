@@ -78,4 +78,79 @@
     <string name="contact_details_phone_numbers">Phone Numbers</string>
     <string name="contact_details_open_dialer">Open dialler</string>
     <string name="contact_details_no_phone_numbers">No phone numbers available</string>
+
+    <!-- Favourites -->
+    <string name="favourites_title">Favourites</string>
+    <string name="favourites_loading">Loading favourites…</string>
+    <string name="favourites_empty_title">No favourites yet</string>
+    <string name="favourites_empty_description">Mark important contacts as favourites to find them quickly.</string>
+    <string name="favourites_browse_contacts">Browse contacts</string>
+    <string name="favourites_permission_title">Access needed</string>
+    <string name="favourites_permission_description">To resolve and display your favourites, Kontact++ needs contacts access.</string>
+    <string name="favourites_open_contacts">Open Contacts</string>
+    <string name="favourites_error_title">Error loading favourites</string>
+    <string name="favourites_error_description">Something went wrong while loading your favourite contacts.</string>
+    <string name="favourites_retry">Retry</string>
+    <string name="favourite_add">Add to favourites</string>
+    <string name="favourite_remove">Remove from favourites</string>
+    <string name="favourite_update_error">Failed to update favourite status.</string>
+
+    <plurals name="favourites_count">
+        <item quantity="one">%d favourite</item>
+        <item quantity="other">%d favourites</item>
+    </plurals>
+
+    <!-- Recents -->
+    <string name="recents_title">Recents</string>
+    <string name="recents_default_role_title">Make Kontact++ your default phone app</string>
+    <string name="recents_default_role_description">To display call history and manage calls, Kontact++ must be selected as your default phone app.</string>
+    <string name="recents_default_role_privacy">Call history is processed locally and is not uploaded.</string>
+    <string name="recents_choose_app">Choose Kontact++</string>
+    <string name="recents_role_unsupported_title">Telecom Unsupported</string>
+    <string name="recents_role_unsupported_description">This device does not support Telecom features required for call history.</string>
+    <string name="recents_permission_title">Allow call history access</string>
+    <string name="recents_permission_description">Kontact++ uses call history to display your recent calls locally.</string>
+    <string name="recents_permission_allow">Allow call history access</string>
+    <string name="recents_permission_denied_title">Permission needed</string>
+    <string name="recents_permission_denied_description">To show your call history, this feature needs access to your device call logs.</string>
+    <string name="recents_permission_retry">Try again</string>
+    <string name="recents_permission_settings">Open settings</string>
+    <string name="recents_loading">Loading calls…</string>
+    <string name="recents_empty_title">No recent calls</string>
+    <string name="recents_empty_description">Your call history will appear here.</string>
+    <string name="recents_error_title">Error loading calls</string>
+    <string name="recents_error_description">Something went wrong while retrieving your call history.</string>
+    <string name="recents_no_results_title">No matching calls</string>
+    <string name="recents_no_results_description">No calls match your current search.</string>
+    <string name="recents_search_hint">Search calls or names</string>
+    <string name="recents_clear_search">Clear search</string>
+    <string name="recents_refresh">Refresh</string>
+    <string name="recents_call_back">Call back</string>
+    <string name="recents_today">Today</string>
+    <string name="recents_yesterday">Yesterday</string>
+    <string name="recents_unknown_caller">Unknown caller</string>
+    <string name="recents_private_number">Private number</string>
+
+    <!-- Call Types -->
+    <string name="call_incoming">Incoming</string>
+    <string name="call_outgoing">Outgoing</string>
+    <string name="call_missed">Missed</string>
+    <string name="call_rejected">Rejected</string>
+    <string name="call_blocked">Blocked</string>
+    <string name="call_voicemail">Voicemail</string>
+    <string name="call_unknown">Unknown</string>
+
+    <!-- Active Call -->
+    <string name="active_call_answer">Answer</string>
+    <string name="active_call_decline">Decline</string>
+    <string name="active_call_end">End call</string>
+    <string name="active_call_mute">Mute</string>
+    <string name="active_call_unmute">Unmute</string>
+    <string name="active_call_hold">Hold</string>
+    <string name="active_call_resume">Resume</string>
+    <string name="active_call_incoming">Incoming call…</string>
+    <string name="active_call_dialling">Dialling…</string>
+    <string name="active_call_connecting">Connecting…</string>
+    <string name="active_call_active">Active</string>
+    <string name="active_call_on_hold">On hold</string>
 </resources>

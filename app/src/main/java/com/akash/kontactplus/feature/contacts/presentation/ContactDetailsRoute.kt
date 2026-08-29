@@ -25,6 +25,9 @@ fun ContactDetailsRoute(
         onPhoneNumberClick = { phoneNumber ->
             context.dialNumber(phoneNumber)
         },
+        onFavouriteClick = {
+            viewModel.onFavouriteClick()
+        },
         onRetry = {
             viewModel.retry()
         },
