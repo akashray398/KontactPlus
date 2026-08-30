@@ -368,7 +368,7 @@ private fun InfoContent(
                 color = MaterialTheme.colorScheme.outline
             )
         }
-        if (buttonLabel != null && onButtonClick != null) {
+        if (buttonLabel != null && (onButtonClick != null)) {
             Spacer(modifier = Modifier.padding(SpaceLarge))
             KontactPrimaryButton(
                 onClick = onButtonClick,

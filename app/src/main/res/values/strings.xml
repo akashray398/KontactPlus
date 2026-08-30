@@ -153,4 +153,34 @@
     <string name="active_call_connecting">Connecting…</string>
     <string name="active_call_active">Active</string>
     <string name="active_call_on_hold">On hold</string>
+
+    <!-- Dialpad -->
+    <string name="dialpad_title">Keypad</string>
+    <string name="dialpad_enter_number">Enter a number</string>
+    <string name="dialpad_delete">Delete</string>
+    <string name="dialpad_clear">Clear</string>
+    <string name="dialpad_call">Call</string>
+    <string name="dialpad_paste">Paste</string>
+    <string name="dialpad_create_contact">Create new contact</string>
+    <string name="dialpad_suggestions">Suggestions</string>
+    <string name="dialpad_no_telecom_title">Dialing Unsupported</string>
+    <string name="dialpad_no_telecom_description">This device cannot place phone calls.</string>
+    <string name="dialpad_role_title">Default Phone App Required</string>
+    <string name="dialpad_role_description">To place calls directly from Kontact++, it must be set as your default phone app.</string>
+    <string name="dialpad_choose_default">Set as default</string>
+    <string name="dialpad_permission_title">Calling Permission Needed</string>
+    <string name="dialpad_permission_description">Kontact++ needs permission to place phone calls.</string>
+    <string name="dialpad_permission_allow">Allow calling</string>
+    <string name="dialpad_permission_denied_title">Calling Permission Denied</string>
+    <string name="dialpad_permission_denied_description">To place calls, this feature needs calling permission.</string>
+    <string name="dialpad_permission_settings">Open settings</string>
+    <string name="dialpad_invalid_number">Invalid number</string>
+    <string name="dialpad_number_too_long">Number is too long</string>
+    <string name="dialpad_clipboard_invalid">No dialable number in clipboard</string>
+    <string name="dialpad_call_starting">Starting call…</string>
+    <string name="dialpad_call_failed">The call could not be started.</string>
+    <string name="dialpad_open_contact">View contact</string>
+    <string name="dialpad_plus">Plus</string>
+    <string name="dialpad_star">Star</string>
+    <string name="dialpad_hash">Hash</string>
 </resources>

@@ -12,10 +12,9 @@ import com.akash.kontactplus.core.telecom.TelecomRoleManager
 import com.akash.kontactplus.feature.assistant.presentation.AssistantScreen
 import com.akash.kontactplus.feature.contacts.presentation.ContactDetailsRoute
 import com.akash.kontactplus.feature.contacts.presentation.ContactsRoute
-import com.akash.kontactplus.feature.dialpad.presentation.DialpadScreen
+import com.akash.kontactplus.feature.dialpad.presentation.DialpadRoute
 import com.akash.kontactplus.feature.favourites.presentation.FavouritesRoute
 import com.akash.kontactplus.feature.recents.presentation.RecentsRoute
-import com.akash.kontactplus.feature.recents.presentation.RecentsScreen
 
 @Composable
 fun KontactNavHost(
@@ -72,9 +71,10 @@ fun KontactNavHost(
                     defaultValue = null
                 }
             )
-        ) { backStackEntry ->
-            val number = backStackEntry.arguments?.getString("number")
-            DialpadScreen(prefilledNumber = number)
+        ) {
+            DialpadRoute(
+                telecomRoleManager = telecomRoleManager
+            )
         }
         
         composable(route = KontactDestination.Assistant.route) {
