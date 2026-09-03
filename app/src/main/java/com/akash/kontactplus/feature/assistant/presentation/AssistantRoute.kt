@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun AssistantRoute(
     onContactClick: (String) -> Unit,
+    onAiToolsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AssistantViewModel = hiltViewModel()
 ) {
@@ -17,6 +18,7 @@ fun AssistantRoute(
     AssistantScreen(
         uiState = uiState,
         onContactClick = onContactClick,
+        onAiToolsClick = onAiToolsClick,
         modifier = modifier
     )
 }

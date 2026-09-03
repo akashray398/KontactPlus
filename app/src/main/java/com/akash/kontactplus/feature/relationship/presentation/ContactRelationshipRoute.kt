@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun ContactRelationshipRoute(
     onBackClick: () -> Unit,
+    onAiToolsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ContactRelationshipViewModel = hiltViewModel()
 ) {
@@ -25,6 +26,7 @@ fun ContactRelationshipRoute(
         onAddReminder = viewModel::addReminder,
         onCompleteReminder = viewModel::completeReminder,
         onCancelReminder = viewModel::cancelReminder,
+        onAiToolsClick = onAiToolsClick,
         onBackClick = onBackClick,
         modifier = modifier
     )

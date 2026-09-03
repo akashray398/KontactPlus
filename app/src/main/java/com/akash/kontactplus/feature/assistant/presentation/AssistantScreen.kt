@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import com.akash.kontactplus.feature.relationship.domain.usecase.DashboardItem
 fun AssistantScreen(
     uiState: AssistantUiState,
     onContactClick: (String) -> Unit,
+    onAiToolsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -38,41 +40,68 @@ fun AssistantScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.dashboard.dueToday.isEmpty() && 
-                   uiState.dashboard.overdue.isEmpty() && 
-                   uiState.dashboard.upcomingDates.isEmpty() && 
-                   uiState.dashboard.upcomingReminders.isEmpty()) {
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(SpaceMedium))
-                    Text(
-                        text = stringResource(R.string.assistant_all_caught_up),
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                    Text(
-                        text = stringResource(R.string.assistant_all_caught_up_description),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(vertical = SpaceMedium),
+            verticalArrangement = Arrangement.spacedBy(SpaceSmall)
+        ) {
+            // AI Tools Entry
+            item {
+                Card(
+                    onClick = onAiToolsClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(SpaceMedium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.AutoFixHigh, contentDescription = null)
+                        Spacer(Modifier.width(SpaceMedium))
+                        Column {
+                            Text(text = stringResource(R.string.ai_tools_title), style = MaterialTheme.typography.titleMedium)
+                            Text(text = stringResource(R.string.ai_tools_description), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
+                Spacer(Modifier.height(SpaceMedium))
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(vertical = SpaceMedium),
-                verticalArrangement = Arrangement.spacedBy(SpaceSmall)
-            ) {
+
+            if (uiState.isLoading) {
+                item {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (uiState.dashboard.dueToday.isEmpty() && 
+                       uiState.dashboard.overdue.isEmpty() && 
+                       uiState.dashboard.upcomingDates.isEmpty() && 
+                       uiState.dashboard.upcomingReminders.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 64.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.height(SpaceMedium))
+                        Text(
+                            text = stringResource(R.string.assistant_all_caught_up),
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                        Text(
+                            text = stringResource(R.string.assistant_all_caught_up_description),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            } else {
                 if (uiState.dashboard.overdue.isNotEmpty()) {
                     item { SectionHeader(stringResource(R.string.assistant_overdue), MaterialTheme.colorScheme.error) }
                     items(uiState.dashboard.overdue) { item ->
@@ -100,9 +129,9 @@ fun AssistantScreen(
                         DashboardCard(item, onClick = { onContactClick(item.lookupKey) })
                     }
                 }
-                
-                item { Spacer(modifier = Modifier.height(SpaceMedium)) }
             }
+            
+            item { Spacer(modifier = Modifier.height(SpaceMedium)) }
         }
     }
 }

@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.akash.kontactplus.core.telecom.TelecomRoleManager
+import com.akash.kontactplus.feature.ai.presentation.AiFlowRoute
 import com.akash.kontactplus.feature.assistant.presentation.AssistantRoute
 import com.akash.kontactplus.feature.contacts.presentation.ContactDetailsRoute
 import com.akash.kontactplus.feature.contacts.presentation.ContactsRoute
@@ -83,6 +84,9 @@ fun KontactNavHost(
                 onContactClick = { lookupKey ->
                     val encodedKey = Uri.encode(lookupKey)
                     navController.navigate("contact/$encodedKey")
+                },
+                onAiToolsClick = {
+                    navController.navigate("ai_tools")
                 }
             )
         }
@@ -109,6 +113,15 @@ fun KontactNavHost(
             )
         ) {
             ContactRelationshipRoute(
+                onBackClick = { navController.popBackStack() },
+                onAiToolsClick = {
+                    navController.navigate("ai_tools")
+                }
+            )
+        }
+
+        composable(route = "ai_tools") {
+            AiFlowRoute(
                 onBackClick = { navController.popBackStack() }
             )
         }

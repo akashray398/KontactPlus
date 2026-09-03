@@ -8,6 +8,12 @@
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
 .DS_Store
+
+# AI Backend Secrets
+backend/**/.env
+backend/**/appsettings.json
+!backend/**/appsettings.Development.json
+backend/**/usersecrets.json
 /build
 /captures
 .externalNativeBuild

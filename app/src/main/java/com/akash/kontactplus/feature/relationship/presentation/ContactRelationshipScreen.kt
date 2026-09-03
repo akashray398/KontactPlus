@@ -36,6 +36,7 @@ fun ContactRelationshipScreen(
     onAddReminder: (String, String, Instant) -> Unit,
     onCompleteReminder: (String) -> Unit,
     onCancelReminder: (String) -> Unit,
+    onAiToolsClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -53,6 +54,9 @@ fun ContactRelationshipScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onAiToolsClick) {
+                        Icon(Icons.Default.AutoFixHigh, contentDescription = stringResource(R.string.ai_tools_title))
+                    }
                     if (uiState.hasUnsavedChanges) {
                         IconButton(onClick = onSaveNote) {
                             Icon(Icons.Default.Save, contentDescription = stringResource(R.string.relationship_note_save))
