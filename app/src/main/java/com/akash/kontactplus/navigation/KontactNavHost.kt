@@ -9,12 +9,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.akash.kontactplus.core.telecom.TelecomRoleManager
-import com.akash.kontactplus.feature.assistant.presentation.AssistantScreen
+import com.akash.kontactplus.feature.assistant.presentation.AssistantRoute
 import com.akash.kontactplus.feature.contacts.presentation.ContactDetailsRoute
 import com.akash.kontactplus.feature.contacts.presentation.ContactsRoute
 import com.akash.kontactplus.feature.dialpad.presentation.DialpadRoute
 import com.akash.kontactplus.feature.favourites.presentation.FavouritesRoute
 import com.akash.kontactplus.feature.recents.presentation.RecentsRoute
+import com.akash.kontactplus.feature.relationship.presentation.ContactRelationshipRoute
 
 @Composable
 fun KontactNavHost(
@@ -78,7 +79,12 @@ fun KontactNavHost(
         }
         
         composable(route = KontactDestination.Assistant.route) {
-            AssistantScreen()
+            AssistantRoute(
+                onContactClick = { lookupKey ->
+                    val encodedKey = Uri.encode(lookupKey)
+                    navController.navigate("contact/$encodedKey")
+                }
+            )
         }
 
         composable(
@@ -88,6 +94,21 @@ fun KontactNavHost(
             )
         ) {
             ContactDetailsRoute(
+                onBackClick = { navController.popBackStack() },
+                onManageRelationship = { lookupKey ->
+                    val encodedKey = Uri.encode(lookupKey)
+                    navController.navigate("contact/$encodedKey/relationship")
+                }
+            )
+        }
+
+        composable(
+            route = "contact/{lookupKey}/relationship",
+            arguments = listOf(
+                navArgument("lookupKey") { type = NavType.StringType }
+            )
+        ) {
+            ContactRelationshipRoute(
                 onBackClick = { navController.popBackStack() }
             )
         }

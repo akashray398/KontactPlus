@@ -7,6 +7,7 @@ import com.akash.kontactplus.R
 import com.akash.kontactplus.feature.contacts.domain.usecase.GetContactUseCase
 import com.akash.kontactplus.feature.favourites.domain.usecase.IsContactFavouriteUseCase
 import com.akash.kontactplus.feature.favourites.domain.usecase.ToggleFavouriteContactUseCase
+import com.akash.kontactplus.feature.relationship.domain.usecase.ObserveContactRelationshipUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +22,8 @@ class ContactDetailsViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getContactUseCase: GetContactUseCase,
     private val isContactFavouriteUseCase: IsContactFavouriteUseCase,
-    private val toggleFavouriteContactUseCase: ToggleFavouriteContactUseCase
+    private val toggleFavouriteContactUseCase: ToggleFavouriteContactUseCase,
+    private val observeContactRelationshipUseCase: ObserveContactRelationshipUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ContactDetailsUiState>(ContactDetailsUiState.Loading)
@@ -32,6 +34,7 @@ class ContactDetailsViewModel @Inject constructor(
     init {
         loadContact()
         observeFavouriteStatus()
+        observeRelationship()
     }
 
     fun retry() {
@@ -102,6 +105,19 @@ class ContactDetailsViewModel @Inject constructor(
                             isFavourite = isFavourite,
                             isFavouriteActionInProgress = false
                         )
+                    } else state
+                }
+            }
+        }
+    }
+
+    private fun observeRelationship() {
+        val key = lookupKey ?: return
+        viewModelScope.launch {
+            observeContactRelationshipUseCase(key).collectLatest { relationship ->
+                _uiState.update { state ->
+                    if (state is ContactDetailsUiState.Success) {
+                        state.copy(relationship = relationship)
                     } else state
                 }
             }

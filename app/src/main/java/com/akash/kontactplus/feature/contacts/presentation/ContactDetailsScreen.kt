@@ -1,31 +1,19 @@
 package com.akash.kontactplus.feature.contacts.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +37,7 @@ fun ContactDetailsScreen(
     onBackClick: () -> Unit,
     onPhoneNumberClick: (String) -> Unit,
     onFavouriteClick: () -> Unit,
+    onManageRelationship: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,7 +77,9 @@ fun ContactDetailsScreen(
             is ContactDetailsUiState.Success -> {
                 SuccessState(
                     contact = uiState.contact,
-                    onPhoneNumberClick = onPhoneNumberClick
+                    relationship = uiState.relationship,
+                    onPhoneNumberClick = onPhoneNumberClick,
+                    onManageRelationship = onManageRelationship
                 )
             }
             ContactDetailsUiState.NotFound -> {
@@ -127,7 +118,9 @@ private fun LoadingState() {
 @Composable
 private fun SuccessState(
     contact: Contact,
-    onPhoneNumberClick: (String) -> Unit
+    relationship: com.akash.kontactplus.feature.relationship.domain.model.ContactRelationship?,
+    onPhoneNumberClick: (String) -> Unit,
+    onManageRelationship: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -149,6 +142,49 @@ private fun SuccessState(
             textAlign = TextAlign.Center
         )
         
+        Spacer(modifier = Modifier.height(SpaceLarge))
+
+        // Relationship Summary
+        KontactCard(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onManageRelationship
+        ) {
+            Column(modifier = Modifier.padding(SpaceMedium)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.relationship_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+                
+                if (relationship?.privateNote?.isNotBlank() == true) {
+                    Spacer(modifier = Modifier.height(SpaceSmall))
+                    Text(
+                        text = relationship.privateNote,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 3,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+
+                if (relationship?.tags?.isNotEmpty() == true) {
+                    Spacer(modifier = Modifier.height(SpaceSmall))
+                    // Simple tags list
+                    Text(
+                        text = relationship.tags.joinToString { it.name },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(SpaceLarge))
         
         Text(
@@ -257,37 +293,7 @@ private fun ContactDetailsSuccessPreview() {
             onBackClick = {},
             onPhoneNumberClick = {},
             onFavouriteClick = {},
-            onRetry = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ContactDetailsFavouritePreview() {
-    KontactPlusTheme {
-        ContactDetailsScreen(
-            uiState = ContactDetailsUiState.Success(
-                contact = Contact(1, "k1", "Akash Patel", listOf("1234567890")),
-                isFavourite = true
-            ),
-            onBackClick = {},
-            onPhoneNumberClick = {},
-            onFavouriteClick = {},
-            onRetry = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ContactDetailsLoadingPreview() {
-    KontactPlusTheme {
-        ContactDetailsScreen(
-            uiState = ContactDetailsUiState.Loading,
-            onBackClick = {},
-            onPhoneNumberClick = {},
-            onFavouriteClick = {},
+            onManageRelationship = {},
             onRetry = {}
         )
     }

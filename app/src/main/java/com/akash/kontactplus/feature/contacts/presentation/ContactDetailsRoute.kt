@@ -13,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 @Composable
 fun ContactDetailsRoute(
     onBackClick: () -> Unit,
+    onManageRelationship: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ContactDetailsViewModel = hiltViewModel()
 ) {
@@ -27,6 +28,11 @@ fun ContactDetailsRoute(
         },
         onFavouriteClick = {
             viewModel.onFavouriteClick()
+        },
+        onManageRelationship = {
+            if (uiState is ContactDetailsUiState.Success) {
+                onManageRelationship((uiState as ContactDetailsUiState.Success).contact.lookupKey)
+            }
         },
         onRetry = {
             viewModel.retry()

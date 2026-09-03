@@ -34,10 +34,11 @@ import com.akash.kontactplus.core.telecom.ActiveCallInfo
 fun IncomingCallScreen(
     callInfo: ActiveCallInfo,
     onAnswer: () -> Unit,
-    onDecline: () -> Unit
+    onDecline: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(SpaceMedium),
         horizontalAlignment = Alignment.CenterHorizontally,

@@ -2,6 +2,8 @@ package com.akash.kontactplus.core.telecom
 
 import android.telecom.Call
 import android.telecom.CallAudioState
+import android.telecom.DisconnectCause
+import com.akash.kontactplus.core.telecom.notification.CallNotificationManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,13 +11,10 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Singleton manager that interacts directly with Telecom Call objects.
- * Exposes domain-safe state flows.
- */
 @Singleton
-class CallManager @Inject constructor() {
-
+class CallManager @Inject constructor(
+    private val notificationManager: CallNotificationManager
+) {
     private val _activeCallInfo = MutableStateFlow(ActiveCallInfo())
     val activeCallInfo: StateFlow<ActiveCallInfo> = _activeCallInfo.asStateFlow()
 
@@ -31,23 +30,28 @@ class CallManager @Inject constructor() {
         }
     }
 
-    /**
-     * Called when a new call is added to the InCallService.
-     */
     fun onCallAdded(call: Call) {
         currentCall = call
         call.registerCallback(callCallback)
         updateCallInfo()
     }
 
-    /**
-     * Called when a call is removed from the InCallService.
-     */
     fun onCallRemoved(call: Call) {
         if (currentCall == call) {
             call.unregisterCallback(callCallback)
             currentCall = null
+            notificationManager.cancelNotification()
             _activeCallInfo.update { ActiveCallInfo() }
+        }
+    }
+
+    fun onCallAudioStateChanged(audioState: CallAudioState) {
+        _activeCallInfo.update {
+            it.copy(
+                isMuted = audioState.isMuted,
+                currentEndpoint = mapAudioRoute(audioState.route),
+                availableEndpoints = mapAvailableRoutes(audioState.supportedRouteMask)
+            )
         }
     }
 
@@ -71,9 +75,14 @@ class CallManager @Inject constructor() {
         currentCall?.unhold()
     }
 
-    /**
-     * Updates the domain-safe active-call state from the raw Telecom Call.
-     */
+    fun playDtmfTone(digit: Char) {
+        currentCall?.playDtmfTone(digit)
+    }
+
+    fun stopDtmfTone() {
+        currentCall?.stopDtmfTone()
+    }
+
     private fun updateCallInfo() {
         val call = currentCall ?: return
         val details = call.details
@@ -81,21 +90,49 @@ class CallManager @Inject constructor() {
         val phoneNumber = details?.handle?.schemeSpecificPart ?: ""
         val displayName = details?.callerDisplayName ?: ""
         val state = mapTelecomState(call.state)
+        val direction = if (call.state == Call.STATE_RINGING) CallDirection.Incoming else CallDirection.Outgoing
         
         val capabilities = details?.callCapabilities ?: 0
         val canHold = (capabilities and Call.Details.CAPABILITY_HOLD) != 0
-        val canUnhold = (capabilities and Call.Details.CAPABILITY_SUPPORT_HOLD) != 0 // Simplified
+        val canUnhold = (capabilities and Call.Details.CAPABILITY_SUPPORT_HOLD) != 0 && call.state == Call.STATE_HOLDING
         val canMute = (capabilities and Call.Details.CAPABILITY_MUTE) != 0
+        val canDtmf = true
 
-        _activeCallInfo.update {
-            it.copy(
-                phoneNumber = phoneNumber,
-                displayName = displayName,
-                state = state,
-                canHold = canHold,
-                canUnhold = canUnhold,
-                canMute = canMute
+        val disconnectReason = mapDisconnectCause(details?.disconnectCause)
+
+        val info = ActiveCallInfo(
+            callId = call.hashCode().toString(),
+            phoneNumber = phoneNumber,
+            displayName = displayName,
+            state = state,
+            direction = direction,
+            canHold = canHold,
+            canUnhold = canUnhold,
+            canMute = canMute,
+            canDtmf = canDtmf,
+            disconnectReason = disconnectReason
+        )
+
+        _activeCallInfo.update { current ->
+            info.copy(
+                isMuted = current.isMuted,
+                currentEndpoint = current.currentEndpoint,
+                availableEndpoints = current.availableEndpoints
             )
+        }
+
+        updateNotification(info)
+    }
+
+    private fun updateNotification(info: ActiveCallInfo) {
+        when (info.state) {
+            ActiveCallState.Incoming -> notificationManager.showIncomingCallNotification(info)
+            ActiveCallState.Active, ActiveCallState.Dialling, ActiveCallState.Connecting, ActiveCallState.OnHold -> {
+                notificationManager.showOngoingCallNotification(info)
+            }
+            ActiveCallState.Disconnected, ActiveCallState.Disconnecting, ActiveCallState.NoCall -> {
+                notificationManager.cancelNotification()
+            }
         }
     }
 
@@ -108,8 +145,39 @@ class CallManager @Inject constructor() {
             Call.STATE_ACTIVE -> ActiveCallState.Active
             Call.STATE_HOLDING -> ActiveCallState.OnHold
             Call.STATE_DISCONNECTED -> ActiveCallState.Disconnected
-            Call.STATE_DISCONNECTING -> ActiveCallState.Disconnected
+            Call.STATE_DISCONNECTING -> ActiveCallState.Disconnecting
             else -> ActiveCallState.NoCall
         }
+    }
+
+    private fun mapDisconnectCause(cause: DisconnectCause?): CallDisconnectReason {
+        return when (cause?.code) {
+            DisconnectCause.LOCAL -> CallDisconnectReason.Local
+            DisconnectCause.REMOTE -> CallDisconnectReason.Remote
+            DisconnectCause.REJECTED -> CallDisconnectReason.Rejected
+            DisconnectCause.MISSED -> CallDisconnectReason.Missed
+            DisconnectCause.BUSY -> CallDisconnectReason.Busy
+            DisconnectCause.ERROR -> CallDisconnectReason.Error
+            else -> CallDisconnectReason.Other
+        }
+    }
+
+    private fun mapAudioRoute(route: Int): CallAudioEndpoint {
+        return when (route) {
+            CallAudioState.ROUTE_EARPIECE -> CallAudioEndpoint.Earpiece
+            CallAudioState.ROUTE_SPEAKER -> CallAudioEndpoint.Speaker
+            CallAudioState.ROUTE_WIRED_HEADSET -> CallAudioEndpoint.WiredHeadset
+            CallAudioState.ROUTE_BLUETOOTH -> CallAudioEndpoint.Bluetooth
+            else -> CallAudioEndpoint.Unknown
+        }
+    }
+
+    private fun mapAvailableRoutes(mask: Int): List<CallAudioEndpoint> {
+        val routes = mutableListOf<CallAudioEndpoint>()
+        if (mask and CallAudioState.ROUTE_EARPIECE != 0) routes.add(CallAudioEndpoint.Earpiece)
+        if (mask and CallAudioState.ROUTE_SPEAKER != 0) routes.add(CallAudioEndpoint.Speaker)
+        if (mask and CallAudioState.ROUTE_WIRED_HEADSET != 0) routes.add(CallAudioEndpoint.WiredHeadset)
+        if (mask and CallAudioState.ROUTE_BLUETOOTH != 0) routes.add(CallAudioEndpoint.Bluetooth)
+        return routes
     }
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.akash.kontactplus.core.database.KontactPlusDatabase
 import com.akash.kontactplus.feature.favourites.data.local.FavouriteContactDao
+import com.akash.kontactplus.feature.relationship.data.local.RelationshipDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +28,9 @@ object DatabaseModule {
             context,
             KontactPlusDatabase::class.java,
             "kontactplus.db"
-        ).build()
+        )
+        .addMigrations(KontactPlusDatabase.MIGRATION_1_2)
+        .build()
     }
 
     @Provides
@@ -35,5 +38,12 @@ object DatabaseModule {
         database: KontactPlusDatabase
     ): FavouriteContactDao {
         return database.favouriteContactDao()
+    }
+
+    @Provides
+    fun provideRelationshipDao(
+        database: KontactPlusDatabase
+    ): RelationshipDao {
+        return database.relationshipDao()
     }
 }

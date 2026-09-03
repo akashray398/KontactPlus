@@ -10,5 +10,6 @@ enum class ActiveCallState {
     Connecting,
     Active,
     OnHold,
+    Disconnecting,
     Disconnected
 }
