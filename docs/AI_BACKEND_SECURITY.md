@@ -2,7 +2,7 @@
 
 ## Secret Handling
 - AI Provider API keys (Gemini, OpenAI, etc.) are **never** stored in the Android application.
-- The Android app calls a backend proxy (`KontactPlus.AI.Api`).
+- The Android app calls a backend proxy (Kotlin Ktor Server).
 - The backend reads the API key from environment variables (configured via `.env` in development or secure environment settings in production).
 
 ## Development Configuration
