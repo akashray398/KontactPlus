@@ -27,7 +27,9 @@ class ContactRelationshipViewModel @Inject constructor(
     private val saveImportantDateUseCase: SaveImportantDateUseCase,
     private val deleteImportantDateUseCase: DeleteImportantDateUseCase,
     private val completeRelationshipReminderUseCase: CompleteRelationshipReminderUseCase,
-    private val cancelRelationshipReminderUseCase: CancelRelationshipReminderUseCase
+    private val cancelRelationshipReminderUseCase: CancelRelationshipReminderUseCase,
+    private val observeFollowUpPreferenceUseCase: ObserveFollowUpPreferenceUseCase,
+    private val saveFollowUpPreferenceUseCase: SaveFollowUpPreferenceUseCase
 ) : ViewModel() {
 
     private val lookupKey: String = checkNotNull(savedStateHandle[KEY_LOOKUP_KEY])
@@ -38,6 +40,7 @@ class ContactRelationshipViewModel @Inject constructor(
     init {
         loadContact()
         observeRelationship()
+        observeFollowUpPreference()
     }
 
     private fun loadContact() {
@@ -54,9 +57,17 @@ class ContactRelationshipViewModel @Inject constructor(
                 _uiState.update { 
                     it.copy(
                         relationship = relationship ?: ContactRelationship(lookupKey),
-                        noteInput = relationship?.privateNote ?: it.noteInput
+                        noteInput = if (!it.hasUnsavedChanges) (relationship?.privateNote ?: "") else it.noteInput
                     ) 
                 }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeFollowUpPreference() {
+        observeFollowUpPreferenceUseCase(lookupKey)
+            .onEach { pref ->
+                _uiState.update { it.copy(followUpPreference = pref ?: ContactFollowUpPreference(lookupKey, FollowUpCadence.Disabled)) }
             }
             .launchIn(viewModelScope)
     }
@@ -133,6 +144,17 @@ class ContactRelationshipViewModel @Inject constructor(
         }
     }
 
+    fun onFollowUpCadenceSelected(cadence: FollowUpCadence) {
+        viewModelScope.launch {
+            val preference = ContactFollowUpPreference(
+                lookupKey = lookupKey,
+                cadence = cadence,
+                enabled = cadence != FollowUpCadence.Disabled
+            )
+            saveFollowUpPreferenceUseCase(preference)
+        }
+    }
+
     companion object {
         const val KEY_LOOKUP_KEY = "lookupKey"
     }
@@ -141,6 +163,7 @@ class ContactRelationshipViewModel @Inject constructor(
 data class ContactRelationshipUiState(
     val contact: com.akash.kontactplus.feature.contacts.domain.model.Contact? = null,
     val relationship: ContactRelationship = ContactRelationship(""),
+    val followUpPreference: ContactFollowUpPreference = ContactFollowUpPreference("", FollowUpCadence.Disabled),
     val noteInput: String = "",
     val hasUnsavedChanges: Boolean = false,
     val isLoading: Boolean = false,

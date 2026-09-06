@@ -2,6 +2,8 @@ package com.akash.kontactplus.feature.relationship.data.repository
 
 import com.akash.kontactplus.feature.relationship.data.local.*
 import com.akash.kontactplus.feature.relationship.domain.model.*
+import com.akash.kontactplus.feature.relationship.domain.repository.ConnectionSuggestionAction
+import com.akash.kontactplus.feature.relationship.domain.repository.ConnectionSuggestionState
 import com.akash.kontactplus.feature.relationship.domain.repository.RelationshipRepository
 import kotlinx.coroutines.flow.*
 import java.time.Instant
@@ -51,7 +53,7 @@ class RelationshipRepositoryImpl @Inject constructor(
         val entity = ContactRelationshipEntity(
             lookupKey = lookupKey,
             privateNote = note.trim(),
-            createdAtEpochMillis = now, // Simplified
+            createdAtEpochMillis = now,
             updatedAtEpochMillis = now
         )
         dao.upsertRelationship(entity)
@@ -99,6 +101,38 @@ class RelationshipRepositoryImpl @Inject constructor(
         dao.markReminderCancelled(reminderId)
     }
 
+    override fun observeFollowUpPreference(lookupKey: String): Flow<ContactFollowUpPreference?> {
+        return dao.observeFollowUpPreference(lookupKey).map { it?.toDomain() }
+    }
+
+    override fun observeAllEnabledFollowUpPreferences(): Flow<List<ContactFollowUpPreference>> {
+        return dao.observeEnabledFollowUpPreferences().map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun saveFollowUpPreference(preference: ContactFollowUpPreference): Result<Unit> = runCatching {
+        dao.upsertFollowUpPreference(preference.toEntity())
+    }
+
+    override fun observeSuggestionActionsForContact(lookupKey: String): Flow<List<ConnectionSuggestionAction>> {
+        return dao.observeSuggestionActionsForContact(lookupKey).map { list -> list.map { it.toDomain() } }
+    }
+
+    override fun observeNonActiveSuggestionActions(): Flow<List<ConnectionSuggestionAction>> {
+        return dao.observeNonActiveSuggestionActions().map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun saveSuggestionAction(action: ConnectionSuggestionAction): Result<Unit> = runCatching {
+        dao.upsertSuggestionAction(action.toEntity())
+    }
+
+    override suspend fun deleteSuggestionAction(key: String): Result<Unit> = runCatching {
+        dao.deleteSuggestionAction(key)
+    }
+
+    override suspend fun clearAllSuggestionActions(): Result<Unit> = runCatching {
+        dao.clearAllSuggestionActions()
+    }
+
     // Mappings
     private fun RelationshipTagEntity.toDomain() = RelationshipTag(id, name, colorKey)
     private fun ImportantDateEntity.toDomain() = ImportantDate(
@@ -109,6 +143,13 @@ class RelationshipRepositoryImpl @Inject constructor(
         id, lookupKey, title, note, Instant.ofEpochMilli(scheduledAtEpochMillis), 
         ReminderStatus.valueOf(status)
     )
+    private fun ContactFollowUpPreferenceEntity.toDomain() = ContactFollowUpPreference(
+        lookupKey, FollowUpCadence.valueOf(cadenceType), customIntervalDays, enabled
+    )
+    private fun ConnectionSuggestionActionEntity.toDomain() = ConnectionSuggestionAction(
+        suggestionKey, lookupKey, ruleType, sourceTimestampMillis, 
+        ConnectionSuggestionState.valueOf(state), snoozedUntilEpochMillis?.let { Instant.ofEpochMilli(it) }, createdAtEpochMillis
+    )
 
     private fun ImportantDate.toEntity() = ImportantDateEntity(
         id, lookupKey, title, localDate.toEpochDay(), type.name, repeatsYearly, 
@@ -117,5 +158,13 @@ class RelationshipRepositoryImpl @Inject constructor(
     private fun RelationshipReminder.toEntity() = RelationshipReminderEntity(
         id, lookupKey, title, note, scheduledAt.toEpochMilli(), status.name, 
         null, System.currentTimeMillis(), System.currentTimeMillis(), null
+    )
+    private fun ContactFollowUpPreference.toEntity() = ContactFollowUpPreferenceEntity(
+        lookupKey, cadence.name, customIntervalDays, enabled, 
+        System.currentTimeMillis(), System.currentTimeMillis()
+    )
+    private fun ConnectionSuggestionAction.toEntity() = ConnectionSuggestionActionEntity(
+        suggestionKey, lookupKey, ruleType, sourceTimestampMillis, 
+        state.name, snoozedUntil?.toEpochMilli(), createdAtEpochMillis, System.currentTimeMillis()
     )
 }

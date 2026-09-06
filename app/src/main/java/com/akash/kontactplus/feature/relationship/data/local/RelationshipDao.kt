@@ -83,4 +83,30 @@ interface RelationshipDao {
 
     @Query("DELETE FROM relationship_reminders WHERE id = :id")
     suspend fun deleteReminder(id: String)
+
+    // Follow-up Preferences
+    @Query("SELECT * FROM contact_follow_up_preferences WHERE lookupKey = :lookupKey")
+    fun observeFollowUpPreference(lookupKey: String): Flow<ContactFollowUpPreferenceEntity?>
+
+    @Query("SELECT * FROM contact_follow_up_preferences WHERE enabled = 1")
+    fun observeEnabledFollowUpPreferences(): Flow<List<ContactFollowUpPreferenceEntity>>
+
+    @Upsert
+    suspend fun upsertFollowUpPreference(preference: ContactFollowUpPreferenceEntity)
+
+    // Suggestion Actions
+    @Query("SELECT * FROM connection_suggestion_actions WHERE lookupKey = :lookupKey")
+    fun observeSuggestionActionsForContact(lookupKey: String): Flow<List<ConnectionSuggestionActionEntity>>
+
+    @Query("SELECT * FROM connection_suggestion_actions WHERE state != 'Active'")
+    fun observeNonActiveSuggestionActions(): Flow<List<ConnectionSuggestionActionEntity>>
+
+    @Upsert
+    suspend fun upsertSuggestionAction(action: ConnectionSuggestionActionEntity)
+
+    @Query("DELETE FROM connection_suggestion_actions WHERE suggestionKey = :key")
+    suspend fun deleteSuggestionAction(key: String)
+
+    @Query("DELETE FROM connection_suggestion_actions")
+    suspend fun clearAllSuggestionActions()
 }

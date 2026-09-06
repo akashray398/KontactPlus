@@ -17,6 +17,7 @@ import com.akash.kontactplus.feature.dialpad.presentation.DialpadRoute
 import com.akash.kontactplus.feature.favourites.presentation.FavouritesRoute
 import com.akash.kontactplus.feature.recents.presentation.RecentsRoute
 import com.akash.kontactplus.feature.relationship.presentation.ContactRelationshipRoute
+import com.akash.kontactplus.feature.settings.presentation.InsightsSettingsRoute
 
 @Composable
 fun KontactNavHost(
@@ -87,6 +88,13 @@ fun KontactNavHost(
                 },
                 onAiToolsClick = {
                     navController.navigate("ai_tools")
+                },
+                onSettingsClick = {
+                    navController.navigate("settings/insights")
+                },
+                onDraftMessage = { action, instruction ->
+                    val encodedInstruction = Uri.encode(instruction)
+                    navController.navigate("ai_tools?action=$action&instruction=$encodedInstruction")
                 }
             )
         }
@@ -120,8 +128,20 @@ fun KontactNavHost(
             )
         }
 
-        composable(route = "ai_tools") {
+        composable(
+            route = "ai_tools?action={action}&instruction={instruction}",
+            arguments = listOf(
+                navArgument("action") { type = NavType.StringType; nullable = true; defaultValue = null },
+                navArgument("instruction") { type = NavType.StringType; nullable = true; defaultValue = null }
+            )
+        ) {
             AiFlowRoute(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = "settings/insights") {
+            InsightsSettingsRoute(
                 onBackClick = { navController.popBackStack() }
             )
         }

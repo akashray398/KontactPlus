@@ -1,5 +1,6 @@
 package com.akash.kontactplus.feature.ai.presentation
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akash.kontactplus.feature.ai.domain.model.*
@@ -13,6 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AiViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val repository: AiRepository,
     private val generateAiTextUseCase: GenerateAiTextUseCase,
     private val localTemplateUseCase: LocalMessageTemplateUseCase
@@ -25,6 +27,16 @@ class AiViewModel @Inject constructor(
         repository.hasAcceptedDisclosure()
             .onEach { accepted -> _uiState.update { it.copy(hasAcceptedDisclosure = accepted) } }
             .launchIn(viewModelScope)
+
+        val initialAction = savedStateHandle.get<String>("action")
+        val initialInstruction = savedStateHandle.get<String>("instruction")
+        
+        if (initialAction != null) {
+            try {
+                val actionType = AiActionType.valueOf(initialAction)
+                startWithAction(actionType, initialInstruction ?: "")
+            } catch (e: Exception) {}
+        }
     }
 
     fun onActionSelected(actionType: AiActionType) {
@@ -42,6 +54,16 @@ class AiViewModel @Inject constructor(
     fun onAcceptDisclosure() {
         viewModelScope.launch {
             repository.setAcceptedDisclosure(true)
+        }
+    }
+
+    fun startWithAction(actionType: AiActionType, instruction: String) {
+        _uiState.update { 
+            it.copy(
+                selectedAction = actionType,
+                instructionInput = instruction,
+                step = AiFlowStep.Configure
+            )
         }
     }
 

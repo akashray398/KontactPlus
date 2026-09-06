@@ -20,4 +20,28 @@ interface RelationshipRepository {
     suspend fun updateReminderWorkId(reminderId: String, workId: String?): Result<Unit>
     suspend fun completeReminder(reminderId: String): Result<Unit>
     suspend fun cancelReminder(reminderId: String): Result<Unit>
+
+    fun observeFollowUpPreference(lookupKey: String): Flow<ContactFollowUpPreference?>
+    fun observeAllEnabledFollowUpPreferences(): Flow<List<ContactFollowUpPreference>>
+    suspend fun saveFollowUpPreference(preference: ContactFollowUpPreference): Result<Unit>
+
+    fun observeSuggestionActionsForContact(lookupKey: String): Flow<List<ConnectionSuggestionAction>>
+    fun observeNonActiveSuggestionActions(): Flow<List<ConnectionSuggestionAction>>
+    suspend fun saveSuggestionAction(action: ConnectionSuggestionAction): Result<Unit>
+    suspend fun deleteSuggestionAction(key: String): Result<Unit>
+    suspend fun clearAllSuggestionActions(): Result<Unit>
+}
+
+data class ConnectionSuggestionAction(
+    val suggestionKey: String,
+    val lookupKey: String,
+    val ruleType: String,
+    val sourceTimestampMillis: Long?,
+    val state: ConnectionSuggestionState,
+    val snoozedUntil: java.time.Instant?,
+    val createdAtEpochMillis: Long = System.currentTimeMillis()
+)
+
+enum class ConnectionSuggestionState {
+    Active, Snoozed, Dismissed, Completed
 }

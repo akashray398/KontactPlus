@@ -26,6 +26,7 @@ fun ContactRelationshipRoute(
         onAddReminder = viewModel::addReminder,
         onCompleteReminder = viewModel::completeReminder,
         onCancelReminder = viewModel::cancelReminder,
+        onFollowUpCadenceSelected = viewModel::onFollowUpCadenceSelected,
         onAiToolsClick = onAiToolsClick,
         onBackClick = onBackClick,
         modifier = modifier

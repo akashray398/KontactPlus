@@ -29,7 +29,10 @@ object DatabaseModule {
             KontactPlusDatabase::class.java,
             "kontactplus.db"
         )
-        .addMigrations(KontactPlusDatabase.MIGRATION_1_2)
+        .addMigrations(
+            KontactPlusDatabase.MIGRATION_1_2,
+            KontactPlusDatabase.MIGRATION_2_3
+        )
         .build()
     }
 

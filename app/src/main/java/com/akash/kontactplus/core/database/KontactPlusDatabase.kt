@@ -18,9 +18,11 @@ import com.akash.kontactplus.feature.relationship.data.local.*
         RelationshipTagEntity::class,
         ContactTagCrossRef::class,
         ImportantDateEntity::class,
-        RelationshipReminderEntity::class
+        RelationshipReminderEntity::class,
+        ContactFollowUpPreferenceEntity::class,
+        ConnectionSuggestionActionEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 abstract class KontactPlusDatabase : RoomDatabase() {
@@ -94,6 +96,40 @@ abstract class KontactPlusDatabase : RoomDatabase() {
                         PRIMARY KEY(`id`)
                     )
                 """.trimIndent())
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Create contact_follow_up_preferences table
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `contact_follow_up_preferences` (
+                        `lookupKey` TEXT NOT NULL, 
+                        `cadenceType` TEXT NOT NULL, 
+                        `customIntervalDays` INTEGER, 
+                        `enabled` INTEGER NOT NULL, 
+                        `createdAtEpochMillis` INTEGER NOT NULL, 
+                        `updatedAtEpochMillis` INTEGER NOT NULL, 
+                        PRIMARY KEY(`lookupKey`)
+                    )
+                """.trimIndent())
+
+                // Create connection_suggestion_actions table
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `connection_suggestion_actions` (
+                        `suggestionKey` TEXT NOT NULL, 
+                        `lookupKey` TEXT NOT NULL, 
+                        `ruleType` TEXT NOT NULL, 
+                        `sourceTimestampMillis` INTEGER, 
+                        `state` TEXT NOT NULL, 
+                        `snoozedUntilEpochMillis` INTEGER, 
+                        `createdAtEpochMillis` INTEGER NOT NULL, 
+                        `updatedAtEpochMillis` INTEGER NOT NULL, 
+                        PRIMARY KEY(`suggestionKey`)
+                    )
+                """.trimIndent())
+                
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_connection_suggestion_actions_lookupKey` ON `connection_suggestion_actions` (`lookupKey`)")
             }
         }
     }

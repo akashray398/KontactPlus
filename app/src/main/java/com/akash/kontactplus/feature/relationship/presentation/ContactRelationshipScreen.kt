@@ -36,6 +36,7 @@ fun ContactRelationshipScreen(
     onAddReminder: (String, String, Instant) -> Unit,
     onCompleteReminder: (String) -> Unit,
     onCancelReminder: (String) -> Unit,
+    onFollowUpCadenceSelected: (com.akash.kontactplus.feature.relationship.domain.model.FollowUpCadence) -> Unit,
     onAiToolsClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -43,6 +44,7 @@ fun ContactRelationshipScreen(
     var showAddTagDialog by remember { mutableStateOf(false) }
     var showAddDateDialog by remember { mutableStateOf(false) }
     var showAddReminderDialog by remember { mutableStateOf(false) }
+    var showCadencePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -79,6 +81,35 @@ fun ContactRelationshipScreen(
                 style = MaterialTheme.typography.headlineMedium
             )
             
+            Spacer(modifier = Modifier.height(SpaceLarge))
+            
+            // --- FOLLOW-UP SCHEDULE SECTION ---
+            RelationshipSectionHeader(
+                title = stringResource(R.string.follow_up_schedule),
+                icon = Icons.Default.Update,
+                onAddClick = { showCadencePicker = true }
+            )
+            
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showCadencePicker = true }
+            ) {
+                Row(
+                    modifier = Modifier.padding(SpaceMedium).fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (uiState.followUpPreference.enabled) 
+                            uiState.followUpPreference.cadence.name 
+                        else 
+                            stringResource(R.string.follow_up_off),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                }
+            }
+
             Spacer(modifier = Modifier.height(SpaceLarge))
             
             // --- PRIVATE NOTE SECTION ---
@@ -247,6 +278,45 @@ fun ContactRelationshipScreen(
             }
         )
     }
+
+    if (showCadencePicker) {
+        CadencePickerDialog(
+            currentCadence = uiState.followUpPreference.cadence,
+            onDismiss = { showCadencePicker = false },
+            onConfirm = { cadence ->
+                onFollowUpCadenceSelected(cadence)
+                showCadencePicker = false
+            }
+        )
+    }
+}
+
+@Composable
+fun CadencePickerDialog(
+    currentCadence: com.akash.kontactplus.feature.relationship.domain.model.FollowUpCadence,
+    onDismiss: () -> Unit,
+    onConfirm: (com.akash.kontactplus.feature.relationship.domain.model.FollowUpCadence) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.follow_up_schedule)) },
+        text = {
+            Column {
+                com.akash.kontactplus.feature.relationship.domain.model.FollowUpCadence.entries.forEach { cadence ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { onConfirm(cadence) }.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = currentCadence == cadence, onClick = { onConfirm(cadence) })
+                        Text(text = cadence.name, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.ai_cancel)) }
+        }
+    )
 }
 
 @Composable

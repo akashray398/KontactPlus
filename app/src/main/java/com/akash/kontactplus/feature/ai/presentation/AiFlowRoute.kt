@@ -27,6 +27,12 @@ fun AiFlowRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
+    // Initialize with arguments if provided (only once)
+    LaunchedEffect(Unit) {
+        // We'll use a hidden way to check if we already initialized or just use the current step.
+        // If it's ActionPicker, we might want to override it.
+    }
+
     if (!uiState.hasAcceptedDisclosure) {
         AiPrivacyDisclosureDialog(
             onConfirm = { viewModel.onAcceptDisclosure() },
