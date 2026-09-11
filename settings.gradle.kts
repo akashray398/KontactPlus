@@ -24,4 +24,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "KontactPlus"
 include(":app")
-include(":backend:kontact-plus-ai-server")

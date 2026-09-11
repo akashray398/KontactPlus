@@ -12,12 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
-import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
-import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
-import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
+import com.akash.kontactplus.core.designsystem.component.*
+import com.akash.kontactplus.core.designsystem.theme.*
 import com.akash.kontactplus.feature.relationship.domain.model.ImportantDateType
 import java.time.Instant
 import java.time.LocalDate
@@ -49,19 +50,33 @@ fun ContactRelationshipScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.relationship_title)) },
+                title = { 
+                    Text(
+                        text = stringResource(R.string.relationship_title),
+                        modifier = Modifier.semantics { heading() }
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
+                            contentDescription = "Back"
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onAiToolsClick) {
-                        Icon(Icons.Default.AutoFixHigh, contentDescription = stringResource(R.string.ai_tools_title))
+                        Icon(
+                            imageVector = Icons.Default.AutoFixHigh, 
+                            contentDescription = stringResource(R.string.ai_tools_title)
+                        )
                     }
                     if (uiState.hasUnsavedChanges) {
                         IconButton(onClick = onSaveNote) {
-                            Icon(Icons.Default.Save, contentDescription = stringResource(R.string.relationship_note_save))
+                            Icon(
+                                imageVector = Icons.Default.Save, 
+                                contentDescription = stringResource(R.string.relationship_note_save)
+                            )
                         }
                     }
                 }
@@ -78,7 +93,8 @@ fun ContactRelationshipScreen(
         ) {
             Text(
                 text = uiState.contact?.displayName ?: stringResource(R.string.contacts_unnamed),
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() }
             )
             
             Spacer(modifier = Modifier.height(SpaceLarge))
@@ -92,7 +108,9 @@ fun ContactRelationshipScreen(
             
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { showCadencePicker = true }
+                onClick = { showCadencePicker = true },
+                shape = MaterialTheme.shapes.medium,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Row(
                     modifier = Modifier.padding(SpaceMedium).fillMaxWidth(),
@@ -106,7 +124,11 @@ fun ContactRelationshipScreen(
                             stringResource(R.string.follow_up_off),
                         style = MaterialTheme.typography.bodyLarge
                     )
-                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        imageVector = Icons.Default.Edit, 
+                        contentDescription = "Change follow-up schedule", 
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             }
 
@@ -115,7 +137,7 @@ fun ContactRelationshipScreen(
             // --- PRIVATE NOTE SECTION ---
             RelationshipSectionHeader(
                 title = stringResource(R.string.relationship_private_note),
-                icon = Icons.Default.Save
+                icon = Icons.Default.Notes
             )
             
             OutlinedTextField(
@@ -136,7 +158,8 @@ fun ContactRelationshipScreen(
                 Text(
                     text = stringResource(R.string.relationship_note_unsaved),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
 
@@ -150,7 +173,7 @@ fun ContactRelationshipScreen(
             )
             if (uiState.relationship.tags.isEmpty()) {
                 Text(
-                    "No tags assigned", 
+                    text = "No tags assigned", 
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -164,7 +187,13 @@ fun ContactRelationshipScreen(
                             selected = true,
                             onClick = { onRemoveTag(tag.id) },
                             label = { Text(tag.name) },
-                            trailingIcon = { Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                            trailingIcon = { 
+                                Icon(
+                                    imageVector = Icons.Default.Close, 
+                                    contentDescription = "Remove tag ${tag.name}", 
+                                    modifier = Modifier.size(16.dp)
+                                ) 
+                            }
                         )
                     }
                 }
@@ -180,13 +209,16 @@ fun ContactRelationshipScreen(
             )
             if (uiState.relationship.importantDates.isEmpty()) {
                 Text(
-                    "Keep track of birthdays or anniversaries", 
+                    text = "Keep track of birthdays or anniversaries", 
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 uiState.relationship.importantDates.forEach { date ->
-                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
                         Row(
                             modifier = Modifier.padding(SpaceMedium).fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -197,7 +229,10 @@ fun ContactRelationshipScreen(
                                 Text(text = date.localDate.toString(), style = MaterialTheme.typography.bodySmall)
                             }
                             IconButton(onClick = { onDeleteDate(date.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Icon(
+                                    imageVector = Icons.Default.Delete, 
+                                    contentDescription = "Delete date ${date.title}"
+                                )
                             }
                         }
                     }
@@ -214,13 +249,16 @@ fun ContactRelationshipScreen(
             )
             if (uiState.relationship.reminders.isEmpty()) {
                 Text(
-                    "Never forget to follow up", 
+                    text = "Never forget to follow up", 
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 uiState.relationship.reminders.forEach { reminder ->
-                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
                         Row(
                             modifier = Modifier.padding(SpaceMedium).fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
@@ -228,16 +266,26 @@ fun ContactRelationshipScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(text = reminder.title, style = MaterialTheme.typography.titleSmall)
-                                Text(text = reminder.status.name, style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    text = reminder.status.name, 
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (reminder.status.name == "Overdue") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                             Row {
                                 if (reminder.status.name == "Scheduled") {
                                     IconButton(onClick = { onCompleteReminder(reminder.id) }) {
-                                        Icon(Icons.Default.Check, contentDescription = null)
+                                        Icon(
+                                            imageVector = Icons.Default.Check, 
+                                            contentDescription = "Mark done"
+                                        )
                                     }
                                 }
                                 IconButton(onClick = { onCancelReminder(reminder.id) }) {
-                                    Icon(Icons.Default.Close, contentDescription = null)
+                                    Icon(
+                                        imageVector = Icons.Default.Close, 
+                                        contentDescription = "Cancel reminder"
+                                    )
                                 }
                             }
                         }
@@ -301,10 +349,13 @@ fun CadencePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.follow_up_schedule)) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 com.akash.kontactplus.feature.relationship.domain.model.FollowUpCadence.entries.forEach { cadence ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onConfirm(cadence) }.padding(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onConfirm(cadence) }
+                            .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         RadioButton(selected = currentCadence == cadence, onClick = { onConfirm(cadence) })
@@ -326,10 +377,18 @@ fun AddTagDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text("Add Tag") },
         text = {
-            TextField(value = tagName, onValueChange = { tagName = it }, label = { Text("Tag Name") })
+            TextField(
+                value = tagName, 
+                onValueChange = { tagName = it }, 
+                label = { Text("Tag Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
         },
         confirmButton = {
-            Button(onClick = { onConfirm(tagName) }) { Text("Add") }
+            Button(
+                onClick = { onConfirm(tagName) },
+                enabled = tagName.isNotBlank()
+            ) { Text("Add") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
@@ -369,11 +428,19 @@ fun AddDateDialog(onDismiss: () -> Unit, onConfirm: (String, LocalDate, Importan
         onDismissRequest = onDismiss,
         title = { Text("Add Important Date") },
         text = {
-            Column {
-                TextField(value = title, onValueChange = { title = it }, label = { Text("Title") })
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                TextField(
+                    value = title, 
+                    onValueChange = { title = it }, 
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true }
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.CalendarToday, contentDescription = null)
@@ -381,16 +448,20 @@ fun AddDateDialog(onDismiss: () -> Unit, onConfirm: (String, LocalDate, Importan
                     Text(text = "Date: ${selectedDate}")
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().clickable { repeatsYearly = !repeatsYearly }
+                ) {
                     Checkbox(checked = repeatsYearly, onCheckedChange = { repeatsYearly = it })
                     Text("Repeats Yearly")
                 }
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onConfirm(title, selectedDate, ImportantDateType.Custom, repeatsYearly)
-            }) { Text("Add") }
+            Button(
+                onClick = { onConfirm(title, selectedDate, ImportantDateType.Custom, repeatsYearly) },
+                enabled = title.isNotBlank()
+            ) { Text("Add") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
@@ -430,12 +501,26 @@ fun AddReminderDialog(onDismiss: () -> Unit, onConfirm: (String, String, Instant
         onDismissRequest = onDismiss,
         title = { Text("Add Reminder") },
         text = {
-            Column {
-                TextField(value = title, onValueChange = { title = it }, label = { Text("Title") })
-                TextField(value = note, onValueChange = { note = it }, label = { Text("Note") })
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                TextField(
+                    value = title, 
+                    onValueChange = { title = it }, 
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = note, 
+                    onValueChange = { note = it }, 
+                    label = { Text("Note") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true }
+                        .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.CalendarToday, contentDescription = null)
@@ -445,9 +530,10 @@ fun AddReminderDialog(onDismiss: () -> Unit, onConfirm: (String, String, Instant
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onConfirm(title, note, selectedInstant)
-            }) { Text("Add") }
+            Button(
+                onClick = { onConfirm(title, note, selectedInstant) },
+                enabled = title.isNotBlank()
+            ) { Text("Add") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
@@ -466,7 +552,7 @@ private fun RelationshipSectionHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = icon, 
                 contentDescription = null, 
@@ -477,12 +563,16 @@ private fun RelationshipSectionHeader(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() }
             )
         }
         if (onAddClick != null) {
-            IconButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add")
+            IconButton(
+                onClick = onAddClick,
+                modifier = Modifier.size(MinimumTouchTarget)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add $title")
             }
         }
     }

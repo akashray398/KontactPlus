@@ -9,9 +9,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
 import com.akash.kontactplus.core.telecom.ActiveCallState
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,7 +29,7 @@ class ActiveCallActivity : ComponentActivity() {
 
         setContent {
             KontactPlusTheme {
-                val uiState by viewModel.uiState.collectAsState()
+                val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 
                 Surface(modifier = Modifier.fillMaxSize()) {
                     when (uiState.callInfo.state) {
@@ -57,8 +57,9 @@ class ActiveCallActivity : ComponentActivity() {
                                 onAudioEndpointSelected = {},
                                 onDismissAudioPicker = {}
                             )
+                            // Auto-finish after 1s
                             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                finish()
+                                if (!isFinishing) finish()
                             }, 1000)
                         }
                         else -> {

@@ -3,50 +3,28 @@ package com.akash.kontactplus.feature.dialpad.presentation
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.akash.kontactplus.R
-import com.akash.kontactplus.core.designsystem.component.ContactAvatar
-import com.akash.kontactplus.core.designsystem.component.KontactCard
-import com.akash.kontactplus.core.designsystem.component.KontactPrimaryButton
+import com.akash.kontactplus.core.designsystem.component.*
 import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
 import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
@@ -82,17 +60,15 @@ fun DialpadScreen(
         Text(
             text = stringResource(R.string.dialpad_title),
             style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().semantics { heading() }
         )
 
         when (uiState.accessState) {
             DialpadAccessState.Checking -> {
-                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                KontactLoadingState()
             }
             DialpadAccessState.RoleUnsupported -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Phone,
                     title = stringResource(R.string.dialpad_no_telecom_title),
                     description = stringResource(R.string.dialpad_no_telecom_description),
@@ -100,42 +76,54 @@ fun DialpadScreen(
                 )
             }
             DialpadAccessState.RoleRequired -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Phone,
                     title = stringResource(R.string.dialpad_role_title),
                     description = stringResource(R.string.dialpad_role_description),
-                    buttonLabel = stringResource(R.string.dialpad_choose_default),
-                    onButtonClick = onRequestRole,
+                    action = {
+                        KontactPrimaryButton(onClick = onRequestRole, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.dialpad_choose_default))
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
             DialpadAccessState.CallPermissionNotRequested -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Lock,
                     title = stringResource(R.string.dialpad_permission_title),
                     description = stringResource(R.string.dialpad_permission_description),
-                    buttonLabel = stringResource(R.string.dialpad_permission_allow),
-                    onButtonClick = onRequestCallPermission,
+                    action = {
+                        KontactPrimaryButton(onClick = onRequestCallPermission, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.dialpad_permission_allow))
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
             DialpadAccessState.CallPermissionDenied -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Lock,
                     title = stringResource(R.string.dialpad_permission_denied_title),
                     description = stringResource(R.string.dialpad_permission_denied_description),
-                    buttonLabel = stringResource(R.string.dialpad_permission_allow),
-                    onButtonClick = onRequestCallPermission,
+                    action = {
+                        KontactPrimaryButton(onClick = onRequestCallPermission, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.dialpad_permission_allow))
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
             DialpadAccessState.CallPermissionPermanentlyDenied -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Lock,
                     title = stringResource(R.string.dialpad_permission_denied_title),
                     description = stringResource(R.string.dialpad_permission_denied_description),
-                    buttonLabel = stringResource(R.string.dialpad_permission_settings),
-                    onButtonClick = onOpenSettings,
+                    action = {
+                        KontactPrimaryButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.dialpad_permission_settings))
+                        }
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -178,7 +166,7 @@ private fun ReadyDialpadContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
+                .heightIn(min = 100.dp)
                 .padding(vertical = SpaceMedium),
             contentAlignment = Alignment.Center
         ) {
@@ -191,11 +179,21 @@ private fun ReadyDialpadContent(
                     ),
                     color = if (uiState.dialableNumber.isEmpty()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    overflow = TextOverflow.Clip
+                    overflow = TextOverflow.Clip,
+                    modifier = Modifier.semantics {
+                        contentDescription = if (uiState.dialableNumber.isEmpty()) {
+                            "Number entry field, empty"
+                        } else {
+                            "Entered number: ${uiState.dialableNumber}"
+                        }
+                    }
                 )
                 
                 if (uiState.dialableNumber.isNotEmpty()) {
-                    TextButton(onClick = onCreateContact) {
+                    TextButton(
+                        onClick = onCreateContact,
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.PersonAdd, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.padding(4.dp))
@@ -214,9 +212,14 @@ private fun ReadyDialpadContent(
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = SpaceSmall),
                     horizontalArrangement = Arrangement.spacedBy(SpaceSmall),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().semantics { 
+                        contentDescription = "Contact suggestions"
+                    }
                 ) {
-                    items(items = uiState.suggestions, key = { it.lookupKey + it.phoneNumber }) { suggestion ->
+                    items(
+                        items = uiState.suggestions, 
+                        key = { it.lookupKey + it.phoneNumber }
+                    ) { suggestion ->
                         SuggestionItem(
                             suggestion = suggestion,
                             onClick = { onSuggestionClick(suggestion.phoneNumber) }
@@ -230,8 +233,8 @@ private fun ReadyDialpadContent(
 
         // Grid
         Column(
-            modifier = Modifier.padding(bottom = SpaceLarge),
-            verticalArrangement = Arrangement.spacedBy(SpaceMedium)
+            modifier = Modifier.padding(bottom = SpaceMedium),
+            verticalArrangement = Arrangement.spacedBy(SpaceSmall)
         ) {
             val keys = DialpadKey.keys
             for (i in 0 until 4) {
@@ -260,10 +263,13 @@ private fun ReadyDialpadContent(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            CombinedIconButton(onClick = onPaste) {
+            CombinedIconButton(
+                onClick = onPaste,
+                modifier = Modifier.semantics { contentDescription = "Paste number" }
+            ) {
                 Icon(
                     imageVector = Icons.Default.ContentPaste,
-                    contentDescription = stringResource(R.string.dialpad_paste)
+                    contentDescription = null
                 )
             }
 
@@ -271,7 +277,11 @@ private fun ReadyDialpadContent(
                 onClick = onCallClick,
                 modifier = Modifier
                     .size(72.dp)
-                    .clip(CircleShape),
+                    .clip(CircleShape)
+                    .semantics { 
+                        contentDescription = "Place call"
+                        role = Role.Button
+                    },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0xFF22C55E), // SuccessGreen
                     contentColor = Color.White
@@ -280,18 +290,19 @@ private fun ReadyDialpadContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Call,
-                    contentDescription = stringResource(R.string.dialpad_call),
+                    contentDescription = null,
                     modifier = Modifier.size(32.dp)
                 )
             }
 
             CombinedIconButton(
                 onClick = onDelete,
-                onLongClick = onClear
+                onLongClick = onClear,
+                modifier = Modifier.semantics { contentDescription = "Delete last digit" }
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = stringResource(R.string.dialpad_delete)
+                    contentDescription = null
                 )
             }
         }
@@ -305,7 +316,7 @@ private fun CombinedIconButton(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     enabled: Boolean = true,
-    colors: androidx.compose.material3.IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
     content: @Composable () -> Unit
 ) {
     Box(
@@ -338,7 +349,7 @@ private fun SuggestionItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             ContactAvatar(displayName = suggestion.displayName, size = 32.dp)
-            Spacer(modifier = Modifier.padding(4.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
                     text = suggestion.displayName,
@@ -354,103 +365,5 @@ private fun SuggestionItem(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun InfoState(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    modifier: Modifier = Modifier,
-    buttonLabel: String? = null,
-    onButtonClick: (() -> Unit)? = null,
-    privacyNote: String? = null
-) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(SpaceMedium))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(SpaceSmall))
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (privacyNote != null) {
-            Spacer(modifier = Modifier.height(SpaceSmall))
-            Text(
-                text = privacyNote,
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
-        if (buttonLabel != null && onButtonClick != null) {
-            Spacer(modifier = Modifier.height(SpaceLarge))
-            KontactPrimaryButton(onClick = onButtonClick, modifier = Modifier.fillMaxWidth()) {
-                Text(text = buttonLabel)
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DialpadScreenReadyPreview() {
-    KontactPlusTheme {
-        DialpadScreen(
-            uiState = DialpadUiState(
-                accessState = DialpadAccessState.Ready,
-                dialableNumber = "123456789",
-                formattedDisplayNumber = "123-456-789"
-            ),
-            onKeyPressed = {},
-            onZeroLongPressed = {},
-            onDelete = {},
-            onClear = {},
-            onPaste = {},
-            onSuggestionClick = {},
-            onCallClick = {},
-            onRequestRole = {},
-            onRequestCallPermission = {},
-            onOpenSettings = {},
-            onCreateContact = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun DialpadScreenRoleRequiredPreview() {
-    KontactPlusTheme(darkTheme = true) {
-        DialpadScreen(
-            uiState = DialpadUiState(accessState = DialpadAccessState.RoleRequired),
-            onKeyPressed = {},
-            onZeroLongPressed = {},
-            onDelete = {},
-            onClear = {},
-            onPaste = {},
-            onSuggestionClick = {},
-            onCallClick = {},
-            onRequestRole = {},
-            onRequestCallPermission = {},
-            onOpenSettings = {},
-            onCreateContact = {}
-        )
     }
 }

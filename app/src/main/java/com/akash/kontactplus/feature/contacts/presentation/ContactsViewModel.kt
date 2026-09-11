@@ -9,14 +9,13 @@ import com.akash.kontactplus.feature.contacts.domain.model.ContactSortOrder
 import com.akash.kontactplus.feature.contacts.domain.usecase.FilterContactsUseCase
 import com.akash.kontactplus.feature.contacts.domain.usecase.GetContactsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class ContactsViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -27,14 +26,22 @@ class ContactsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ContactsUiState())
     val uiState: StateFlow<ContactsUiState> = _uiState.asStateFlow()
 
-    private var allContacts: List<Contact> = emptyList()
+    private val _allContacts = MutableStateFlow<List<Contact>>(emptyList())
+    private val _searchQuery = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
+    private val _sortOrder = savedStateHandle.getStateFlow(KEY_SORT_ORDER, ContactSortOrder.NameAscending)
+
     private var loadContactsJob: Job? = null
 
     init {
-        // Restore search query and sort order from saved state if needed
-        val savedQuery = savedStateHandle.get<String>(KEY_SEARCH_QUERY) ?: ""
-        val savedSortOrder = savedStateHandle.get<ContactSortOrder>(KEY_SORT_ORDER) ?: ContactSortOrder.NameAscending
-        _uiState.update { it.copy(searchQuery = savedQuery, sortOrder = savedSortOrder) }
+        combine(
+            _allContacts,
+            _searchQuery.debounce(200),
+            _sortOrder
+        ) { contacts, query, sortOrder ->
+            filterContactsUseCase(contacts, query, sortOrder)
+        }.onEach { filtered ->
+            _uiState.update { it.copy(visibleContacts = filtered, searchQuery = _searchQuery.value, sortOrder = _sortOrder.value) }
+        }.launchIn(viewModelScope)
     }
 
     fun onPermissionStatusChecked(isGranted: Boolean, shouldShowRationale: Boolean) {
@@ -79,9 +86,8 @@ class ContactsViewModel @Inject constructor(
     }
 
     fun onSearchQueryChanged(query: String) {
-        _uiState.update { it.copy(searchQuery = query) }
         savedStateHandle[KEY_SEARCH_QUERY] = query
-        applyFilter()
+        // UI state update is handled by the combine block
     }
 
     fun onClearSearch() {
@@ -89,9 +95,7 @@ class ContactsViewModel @Inject constructor(
     }
 
     fun onSortOrderChanged(sortOrder: ContactSortOrder) {
-        _uiState.update { it.copy(sortOrder = sortOrder) }
         savedStateHandle[KEY_SORT_ORDER] = sortOrder
-        applyFilter()
     }
 
     private fun loadContacts() {
@@ -104,14 +108,13 @@ class ContactsViewModel @Inject constructor(
             getContactsUseCase().fold(
                 onSuccess = { contacts ->
                     if (_uiState.value.permissionState == ContactsPermissionState.Granted) {
-                        allContacts = contacts
+                        _allContacts.value = contacts
                         _uiState.update { 
                             it.copy(
                                 isLoading = false, 
                                 hasLoadedContacts = true
                             ) 
                         }
-                        applyFilter()
                     }
                 },
                 onFailure = {
@@ -128,18 +131,9 @@ class ContactsViewModel @Inject constructor(
         }
     }
 
-    private fun applyFilter() {
-        val filtered = filterContactsUseCase(
-            contacts = allContacts,
-            query = _uiState.value.searchQuery,
-            sortOrder = _uiState.value.sortOrder
-        )
-        _uiState.update { it.copy(visibleContacts = filtered) }
-    }
-
     private fun clearContacts() {
         loadContactsJob?.cancel()
-        allContacts = emptyList()
+        _allContacts.value = emptyList()
         _uiState.update { 
             it.copy(
                 visibleContacts = emptyList(), 

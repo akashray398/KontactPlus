@@ -5,29 +5,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
-import com.akash.kontactplus.core.designsystem.component.ContactAvatar
-import com.akash.kontactplus.core.designsystem.component.KontactCard
-import com.akash.kontactplus.core.designsystem.component.KontactPrimaryButton
-import com.akash.kontactplus.core.designsystem.theme.ContactAvatarLarge
-import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
-import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
-import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
-import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
+import com.akash.kontactplus.core.designsystem.component.*
+import com.akash.kontactplus.core.designsystem.theme.*
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,77 +34,77 @@ fun ContactDetailsScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        TopAppBar(
-            title = { Text(text = stringResource(R.string.contact_details_title)) },
-            navigationIcon = {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.contact_details_back)
-                    )
-                }
-            },
-            actions = {
-                if (uiState is ContactDetailsUiState.Success) {
-                    IconButton(
-                        onClick = onFavouriteClick,
-                        enabled = !uiState.isFavouriteActionInProgress
-                    ) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        text = stringResource(R.string.contact_details_title),
+                        modifier = Modifier.semantics { heading() }
+                    ) 
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = if (uiState.isFavourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                            contentDescription = stringResource(
-                                if (uiState.isFavourite) R.string.favourite_remove else R.string.favourite_add
-                            ),
-                            tint = if (uiState.isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.contact_details_back)
                         )
                     }
+                },
+                actions = {
+                    if (uiState is ContactDetailsUiState.Success) {
+                        IconButton(
+                            onClick = onFavouriteClick,
+                            enabled = !uiState.isFavouriteActionInProgress
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.isFavourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                                contentDescription = stringResource(
+                                    if (uiState.isFavourite) R.string.favourite_remove else R.string.favourite_add
+                                ),
+                                tint = if (uiState.isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            )
+        },
+        modifier = modifier
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+            when (uiState) {
+                ContactDetailsUiState.Loading -> {
+                    KontactLoadingState()
+                }
+                is ContactDetailsUiState.Success -> {
+                    SuccessState(
+                        contact = uiState.contact,
+                        relationship = uiState.relationship,
+                        onPhoneNumberClick = onPhoneNumberClick,
+                        onManageRelationship = onManageRelationship
+                    )
+                }
+                ContactDetailsUiState.NotFound -> {
+                    KontactEmptyState(
+                        title = stringResource(R.string.contact_details_not_found_title),
+                        description = stringResource(R.string.contact_details_not_found_description),
+                        icon = Icons.Default.SearchOff,
+                        action = {
+                            KontactPrimaryButton(onClick = onBackClick) {
+                                Text(stringResource(R.string.contact_details_back))
+                            }
+                        }
+                    )
+                }
+                is ContactDetailsUiState.Error -> {
+                    KontactErrorState(
+                        title = stringResource(R.string.contact_details_error_title),
+                        description = stringResource(uiState.messageRes),
+                        onRetry = onRetry
+                    )
                 }
             }
-        )
-
-        when (uiState) {
-            ContactDetailsUiState.Loading -> {
-                LoadingState()
-            }
-            is ContactDetailsUiState.Success -> {
-                SuccessState(
-                    contact = uiState.contact,
-                    relationship = uiState.relationship,
-                    onPhoneNumberClick = onPhoneNumberClick,
-                    onManageRelationship = onManageRelationship
-                )
-            }
-            ContactDetailsUiState.NotFound -> {
-                InfoState(
-                    title = stringResource(R.string.contact_details_not_found_title),
-                    description = stringResource(R.string.contact_details_not_found_description),
-                    buttonLabel = stringResource(R.string.contact_details_back),
-                    onButtonClick = onBackClick
-                )
-            }
-            is ContactDetailsUiState.Error -> {
-                InfoState(
-                    title = stringResource(R.string.contact_details_error_title),
-                    description = stringResource(uiState.messageRes),
-                    buttonLabel = stringResource(R.string.contact_details_retry),
-                    onButtonClick = onRetry
-                )
-            }
         }
-    }
-}
-
-@Composable
-private fun LoadingState() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator(modifier = Modifier.size(48.dp))
-        Spacer(modifier = Modifier.height(SpaceMedium))
-        Text(text = stringResource(R.string.contact_details_loading))
     }
 }
 
@@ -160,7 +153,11 @@ private fun SuccessState(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(
+                        imageVector = Icons.Default.Edit, 
+                        contentDescription = "Edit relationship details", 
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
                 
                 if (relationship?.privateNote?.isNotBlank() == true) {
@@ -175,7 +172,6 @@ private fun SuccessState(
 
                 if (relationship?.tags?.isNotEmpty() == true) {
                     Spacer(modifier = Modifier.height(SpaceSmall))
-                    // Simple tags list
                     Text(
                         text = relationship.tags.joinToString { it.name },
                         style = MaterialTheme.typography.labelSmall,
@@ -190,7 +186,7 @@ private fun SuccessState(
         Text(
             text = stringResource(R.string.contact_details_phone_numbers),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().semantics { heading() },
             fontWeight = FontWeight.Bold
         )
         
@@ -242,42 +238,9 @@ private fun PhoneNumberItem(
             }
             Icon(
                 imageVector = Icons.Default.Call,
-                contentDescription = stringResource(R.string.contact_details_open_dialer),
+                contentDescription = "Call $number",
                 tint = MaterialTheme.colorScheme.primary
             )
-        }
-    }
-}
-
-@Composable
-private fun InfoState(
-    title: String,
-    description: String,
-    buttonLabel: String,
-    onButtonClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(SpaceMedium),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(SpaceSmall))
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.height(SpaceLarge))
-        KontactPrimaryButton(onClick = onButtonClick) {
-            Text(text = buttonLabel)
         }
     }
 }

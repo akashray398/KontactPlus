@@ -1,7 +1,10 @@
 package com.akash.kontactplus.feature.ai.data.remote
 
+import com.akash.kontactplus.R
 import com.akash.kontactplus.feature.ai.data.remote.model.AiRequestDto
 import com.akash.kontactplus.feature.ai.domain.model.AiGenerationResult
+import java.io.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 interface AiRemoteDataSource {
@@ -18,22 +21,22 @@ class RetrofitAiRemoteDataSource @Inject constructor(
             if (response.isSuccessful) {
                 response.body()?.let { 
                     AiGenerationResult.Success(it.text, it.modelLabel)
-                } ?: AiGenerationResult.Failed(com.akash.kontactplus.R.string.recents_error_description)
+                } ?: AiGenerationResult.Failed(R.string.ai_failed)
             } else {
                 when (response.code()) {
                     401 -> AiGenerationResult.Unauthorized
+                    403 -> AiGenerationResult.Unavailable
                     429 -> AiGenerationResult.RateLimited
                     503 -> AiGenerationResult.Unavailable
-                    504 -> AiGenerationResult.Timeout
-                    else -> AiGenerationResult.Failed(com.akash.kontactplus.R.string.recents_error_description)
+                    else -> AiGenerationResult.Failed(R.string.ai_failed)
                 }
             }
-        } catch (e: java.net.SocketTimeoutException) {
+        } catch (e: SocketTimeoutException) {
             AiGenerationResult.Timeout
-        } catch (e: java.io.IOException) {
+        } catch (e: IOException) {
             AiGenerationResult.Offline
         } catch (e: Exception) {
-            AiGenerationResult.Failed(com.akash.kontactplus.R.string.recents_error_description)
+            AiGenerationResult.Failed(R.string.ai_failed)
         }
     }
 }

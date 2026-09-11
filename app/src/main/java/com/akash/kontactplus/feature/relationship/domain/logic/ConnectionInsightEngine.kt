@@ -62,7 +62,7 @@ class ConnectionInsightEngine @Inject constructor() {
                     type = if (isOverdue) ConnectionInsightType.ReminderOverdue else ConnectionInsightType.ReminderDue,
                     priority = if (isOverdue) ConnectionInsightPriority.Overdue else ConnectionInsightPriority.Due,
                     titleRes = if (isOverdue) R.string.insight_reminder_overdue_title else R.string.insight_reminder_due_title,
-                    explanationRes = R.string.relationship_reminders,
+                    explanationRes = R.string.ai_instruction, 
                     explanationArgs = listOf(reminder.title),
                     occurredAt = reminder.scheduledAt,
                     dueAt = reminder.scheduledAt,
@@ -87,16 +87,18 @@ class ConnectionInsightEngine @Inject constructor() {
             lastMissed.isAfter(windowStart) && 
             (lastOutgoing == null || lastOutgoing.isBefore(lastMissed))
         }.map { summary ->
+            val missedAt = summary.lastMissedCallAt!!
+            val daysAgo = ChronoUnit.DAYS.between(missedAt.atZone(zoneId).toLocalDate(), now.atZone(zoneId).toLocalDate())
             ConnectionInsight(
-                id = "missed_${summary.lookupKey}_${summary.lastMissedCallAt!!.toEpochMilli()}",
+                id = "missed_${summary.lookupKey}_${missedAt.toEpochMilli()}",
                 lookupKey = summary.lookupKey,
                 type = ConnectionInsightType.UnreturnedMissedCall,
                 priority = ConnectionInsightPriority.Due,
                 titleRes = R.string.insight_missed_call_title,
                 explanationRes = R.string.insight_missed_call_explanation,
-                explanationArgs = listOf(summary.lastMissedCallAt.toEpochMilli().toString()), // Presentation will format
-                occurredAt = summary.lastMissedCallAt,
-                dueAt = summary.lastMissedCallAt,
+                explanationArgs = listOf(daysAgo.toString()),
+                occurredAt = missedAt,
+                dueAt = missedAt,
                 availableActions = listOf(ConnectionInsightAction.Call, ConnectionInsightAction.Dismiss),
                 source = ConnectionInsightSource.MissedCall
             )
@@ -147,6 +149,7 @@ class ConnectionInsightEngine @Inject constructor() {
             if (today.isAfter(nextFollowUp) || today == nextFollowUp) {
                 val isOverdue = today.isAfter(nextFollowUp.plusDays(7))
                 val daysSince = ChronoUnit.DAYS.between(lastInteraction, today)
+                
                 ConnectionInsight(
                     id = "cadence_${pref.lookupKey}_${nextFollowUp}",
                     lookupKey = pref.lookupKey,
@@ -154,7 +157,7 @@ class ConnectionInsightEngine @Inject constructor() {
                     priority = if (isOverdue) ConnectionInsightPriority.Overdue else ConnectionInsightPriority.Normal,
                     titleRes = R.string.insight_follow_up_due_title,
                     explanationRes = R.string.insight_follow_up_due_explanation,
-                    explanationArgs = listOf(pref.cadence.name.lowercase(), daysSince.toString()),
+                    explanationArgs = listOf(pref.cadence.name, daysSince.toString()),
                     occurredAt = summary.lastInteractionAt,
                     dueAt = nextFollowUp.atStartOfDay(zoneId).toInstant(),
                     availableActions = listOf(ConnectionInsightAction.Call, ConnectionInsightAction.DraftMessage, ConnectionInsightAction.Dismiss),

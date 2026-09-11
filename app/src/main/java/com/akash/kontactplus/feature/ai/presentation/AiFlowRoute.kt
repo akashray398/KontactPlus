@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.akash.kontactplus.feature.ai.domain.model.AiGenerationResult
 import com.akash.kontactplus.feature.ai.presentation.components.AiActionPicker
 import com.akash.kontactplus.feature.ai.presentation.components.AiPrivacyDisclosureDialog
 
@@ -26,11 +28,40 @@ fun AiFlowRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var showExitConfirmation by remember { mutableStateOf(false) }
 
-    // Initialize with arguments if provided (only once)
-    LaunchedEffect(Unit) {
-        // We'll use a hidden way to check if we already initialized or just use the current step.
-        // If it's ActionPicker, we might want to override it.
+    val handleBack = {
+        if (uiState.step == AiFlowStep.Result && uiState.generationResult is AiGenerationResult.Success) {
+            showExitConfirmation = true
+        } else if (uiState.step != AiFlowStep.ActionPicker) {
+            viewModel.reset()
+        } else {
+            onBackClick()
+        }
+    }
+
+    BackHandler(onBack = handleBack)
+
+    if (showExitConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmation = false },
+            title = { Text("Discard Draft?") },
+            text = { Text("Your generated AI draft will be lost.") },
+            confirmButton = {
+                TextButton(onClick = { 
+                    showExitConfirmation = false
+                    viewModel.reset()
+                    onBackClick()
+                }) {
+                    Text("Discard")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmation = false }) {
+                    Text("Keep")
+                }
+            }
+        )
     }
 
     if (!uiState.hasAcceptedDisclosure) {
@@ -53,7 +84,7 @@ fun AiFlowRoute(
                 onToneSelected = viewModel::onToneSelected,
                 onInstructionChanged = viewModel::onInstructionChanged,
                 onPreviewPayload = viewModel::onPreviewPayload,
-                onBackClick = { viewModel.reset() }
+                onBackClick = handleBack
             )
         }
         AiFlowStep.Preview -> {
@@ -61,7 +92,7 @@ fun AiFlowRoute(
                 AiPayloadPreviewScreen(
                     draftContext = draft,
                     onGenerate = viewModel::onGenerate,
-                    onBackClick = { viewModel.onActionSelected(uiState.selectedAction!!) }
+                    onBackClick = handleBack
                 )
             }
         }
@@ -69,7 +100,7 @@ fun AiFlowRoute(
             uiState.generationResult?.let { result ->
                 AiResultScreen(
                     result = result,
-                    onBackClick = { viewModel.reset() },
+                    onBackClick = handleBack,
                     onCopyClick = { text -> context.copyToClipboard(text) },
                     onShareClick = { text -> context.shareText(text) }
                 )
@@ -111,7 +142,6 @@ fun AiConfigurationScreen(
                 placeholder = { Text("e.g. Draft a short follow-up...") }
             )
             
-            // Tone Selector (Simplified)
             Text("Tone", style = MaterialTheme.typography.titleMedium)
             Row(
                 modifier = Modifier.fillMaxWidth(),

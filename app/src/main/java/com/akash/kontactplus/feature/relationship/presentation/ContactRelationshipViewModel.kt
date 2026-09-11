@@ -41,6 +41,11 @@ class ContactRelationshipViewModel @Inject constructor(
         loadContact()
         observeRelationship()
         observeFollowUpPreference()
+        
+        // Restore note input if it was saved
+        savedStateHandle.get<String>(KEY_NOTE_INPUT)?.let { savedNote ->
+            _uiState.update { it.copy(noteInput = savedNote, hasUnsavedChanges = true) }
+        }
     }
 
     private fun loadContact() {
@@ -74,12 +79,14 @@ class ContactRelationshipViewModel @Inject constructor(
 
     fun onNoteChanged(note: String) {
         _uiState.update { it.copy(noteInput = note, hasUnsavedChanges = true) }
+        savedStateHandle[KEY_NOTE_INPUT] = note
     }
 
     fun saveNote() {
         viewModelScope.launch {
             savePrivateNoteUseCase(lookupKey, _uiState.value.noteInput).onSuccess {
                 _uiState.update { it.copy(hasUnsavedChanges = false) }
+                savedStateHandle.remove<String>(KEY_NOTE_INPUT)
             }
         }
     }
@@ -157,6 +164,7 @@ class ContactRelationshipViewModel @Inject constructor(
 
     companion object {
         const val KEY_LOOKUP_KEY = "lookupKey"
+        private const val KEY_NOTE_INPUT = "note_input"
     }
 }
 

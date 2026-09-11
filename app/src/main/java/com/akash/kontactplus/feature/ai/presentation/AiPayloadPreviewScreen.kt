@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
 import com.akash.kontactplus.core.designsystem.component.KontactPrimaryButton
@@ -25,10 +27,18 @@ fun AiPayloadPreviewScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.ai_payload_preview_title)) },
+                title = { 
+                    Text(
+                        text = stringResource(R.string.ai_payload_preview_title),
+                        modifier = Modifier.semantics { heading() }
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
@@ -50,10 +60,15 @@ fun AiPayloadPreviewScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = MaterialTheme.shapes.medium
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = "Transmission Data", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        text = "Transmission Data", 
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     DataField(label = "Action", value = draftContext.actionType.name)

@@ -26,31 +26,41 @@ class AndroidContactsDataSource @Inject constructor(
     )
 
     override suspend fun getContacts(): List<Contact> = withContext(Dispatchers.IO) {
-        val resolver: ContentResolver = context.contentResolver
-        val cursor = resolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            projection,
-            null,
-            null,
-            "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY} COLLATE NOCASE ASC"
-        )
+        try {
+            val resolver: ContentResolver = context.contentResolver
+            val cursor = resolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                null,
+                null,
+                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME_PRIMARY} COLLATE NOCASE ASC"
+            )
 
-        cursor?.use { mapCursorToContacts(it) } ?: emptyList()
+            cursor?.use { mapCursorToContacts(it) } ?: emptyList()
+        } catch (e: SecurityException) {
+            emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     override suspend fun getContact(lookupKey: String): Contact? = withContext(Dispatchers.IO) {
         if (lookupKey.isBlank()) return@withContext null
         
-        val resolver: ContentResolver = context.contentResolver
-        val cursor = resolver.query(
-            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-            projection,
-            "${ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY} = ?",
-            arrayOf(lookupKey),
-            null
-        )
+        try {
+            val resolver: ContentResolver = context.contentResolver
+            val cursor = resolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                "${ContactsContract.CommonDataKinds.Phone.LOOKUP_KEY} = ?",
+                arrayOf(lookupKey),
+                null
+            )
 
-        cursor?.use { mapCursorToContacts(it).firstOrNull() }
+            cursor?.use { mapCursorToContacts(it).firstOrNull() }
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private fun mapCursorToContacts(cursor: Cursor): List<Contact> {
@@ -60,6 +70,8 @@ class AndroidContactsDataSource @Inject constructor(
         val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
         val photoIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI)
 
+        if (idIndex == -1 || lookupIndex == -1 || nameIndex == -1 || numberIndex == -1) return emptyList()
+
         val contactMap = mutableMapOf<Long, ContactBuilder>()
 
         while (cursor.moveToNext()) {
@@ -67,7 +79,7 @@ class AndroidContactsDataSource @Inject constructor(
             val lookup = cursor.getString(lookupIndex) ?: ""
             val name = cursor.getString(nameIndex) ?: ""
             val number = cursor.getString(numberIndex)?.trim() ?: ""
-            val photoUri = cursor.getString(photoIndex)
+            val photoUri = if (photoIndex != -1) cursor.getString(photoIndex) else null
 
             if (number.isNotBlank()) {
                 val builder = contactMap.getOrPut(id) {

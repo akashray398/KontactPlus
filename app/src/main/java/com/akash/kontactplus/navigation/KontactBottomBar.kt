@@ -27,6 +27,7 @@ fun KontactBottomBar(
     ) {
         KontactDestination.topLevelDestinations.forEach { destination ->
             val isSelected = currentDestination == destination
+            val label = stringResource(destination.labelRes)
             
             NavigationBarItem(
                 selected = isSelected,
@@ -34,11 +35,11 @@ fun KontactBottomBar(
                 icon = {
                     Icon(
                         imageVector = if (isSelected) destination.selectedIcon else destination.unselectedIcon,
-                        contentDescription = stringResource(destination.labelRes)
+                        contentDescription = null // Label is provided below
                     )
                 },
                 label = {
-                    Text(text = stringResource(destination.labelRes))
+                    Text(text = label)
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = MaterialTheme.colorScheme.primary,

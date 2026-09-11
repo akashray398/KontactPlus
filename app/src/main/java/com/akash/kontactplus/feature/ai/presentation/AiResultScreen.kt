@@ -11,8 +11,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
+import com.akash.kontactplus.core.designsystem.component.KontactErrorState
 import com.akash.kontactplus.feature.ai.domain.model.AiGenerationResult
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,10 +30,18 @@ fun AiResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.ai_result_title)) },
+                title = { 
+                    Text(
+                        text = stringResource(R.string.ai_result_title),
+                        modifier = Modifier.semantics { heading() }
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, 
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
@@ -63,7 +74,8 @@ fun AiResultScreen(
                     ) {
                         Button(
                             onClick = { onCopyClick(result.text) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium
                         ) {
                             Icon(Icons.Default.ContentCopy, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
@@ -71,7 +83,8 @@ fun AiResultScreen(
                         }
                         Button(
                             onClick = { onShareClick(result.text) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            shape = MaterialTheme.shapes.medium
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
@@ -80,38 +93,41 @@ fun AiResultScreen(
                     }
                 }
                 AiGenerationResult.Offline -> {
-                    ErrorState(stringResource(R.string.ai_offline))
+                    KontactErrorState(
+                        title = stringResource(R.string.ai_offline),
+                        description = "Please check your internet connection.",
+                        onRetry = null
+                    )
                 }
                 AiGenerationResult.RateLimited -> {
-                    ErrorState(stringResource(R.string.ai_rate_limited))
+                    KontactErrorState(
+                        title = stringResource(R.string.ai_rate_limited),
+                        description = "Please wait a moment before trying again.",
+                        onRetry = null
+                    )
                 }
                 AiGenerationResult.Timeout -> {
-                    ErrorState("Request timed out. Please try again.")
+                    KontactErrorState(
+                        title = "Request timed out",
+                        description = "The server took too long to respond. Please try again.",
+                        onRetry = null
+                    )
                 }
                 AiGenerationResult.BackendNotConfigured -> {
-                    ErrorState(stringResource(R.string.ai_configuration_missing))
-                }
-                AiGenerationResult.Unauthorized -> {
-                    ErrorState("Unauthorized. Please check backend configuration.")
+                    KontactErrorState(
+                        title = stringResource(R.string.ai_configuration_missing),
+                        description = "The AI backend is not configured for this build.",
+                        onRetry = null
+                    )
                 }
                 else -> {
-                    ErrorState(stringResource(R.string.ai_failed))
+                    KontactErrorState(
+                        title = stringResource(R.string.ai_failed),
+                        description = "Something went wrong while generating the text.",
+                        onRetry = null
+                    )
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ErrorState(message: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-    ) {
-        Text(
-            text = message, 
-            color = MaterialTheme.colorScheme.onErrorContainer,
-            modifier = Modifier.padding(16.dp)
-        )
     }
 }

@@ -1,27 +1,19 @@
 package com.akash.kontactplus.feature.telecom
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
 import com.akash.kontactplus.core.designsystem.component.ContactAvatar
@@ -55,7 +47,8 @@ fun IncomingCallScreen(
             Spacer(modifier = Modifier.height(SpaceLarge))
             Text(
                 text = callInfo.displayName.ifBlank { stringResource(R.string.recents_unknown_caller) },
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() }
             )
             Text(
                 text = callInfo.phoneNumber,
@@ -78,7 +71,9 @@ fun IncomingCallScreen(
         ) {
             IconButton(
                 onClick = onDecline,
-                modifier = Modifier.size(72.dp),
+                modifier = Modifier
+                    .size(72.dp)
+                    .semantics { role = Role.Button },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.error
                 )
@@ -93,7 +88,9 @@ fun IncomingCallScreen(
 
             IconButton(
                 onClick = onAnswer,
-                modifier = Modifier.size(72.dp),
+                modifier = Modifier
+                    .size(72.dp)
+                    .semantics { role = Role.Button },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0xFF22C55E) // SuccessGreen
                 )

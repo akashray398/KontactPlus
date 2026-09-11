@@ -1,37 +1,21 @@
-package com.akash.kontactplus.feature.telecom
+  package com.akash.kontactplus.feature.telecom
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallEnd
-import androidx.compose.material.icons.filled.Dialpad
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.MicOff
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
 import com.akash.kontactplus.core.designsystem.component.ContactAvatar
@@ -76,7 +60,8 @@ fun ActiveCallScreen(
             Spacer(modifier = Modifier.height(SpaceLarge))
             Text(
                 text = callInfo.displayName.ifBlank { stringResource(R.string.recents_unknown_caller) },
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.semantics { heading() }
             )
             Text(
                 text = callInfo.phoneNumber,
@@ -149,7 +134,10 @@ fun ActiveCallScreen(
                     onClick = onDisconnect,
                     modifier = Modifier
                         .size(80.dp)
-                        .clip(CircleShape),
+                        .clip(CircleShape)
+                        .semantics { 
+                            role = Role.Button
+                        },
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     )
@@ -194,6 +182,7 @@ private fun ControlIconButton(
                     if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
                     else Color.Transparent
                 )
+                .semantics { role = Role.Button }
         ) {
             Icon(
                 imageVector = icon,

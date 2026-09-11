@@ -1,15 +1,6 @@
 package com.akash.kontactplus.feature.contacts.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -17,28 +8,22 @@ import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
-import com.akash.kontactplus.core.designsystem.component.ContactAvatar
-import com.akash.kontactplus.core.designsystem.component.KontactCard
-import com.akash.kontactplus.core.designsystem.component.KontactPrimaryButton
+import com.akash.kontactplus.core.designsystem.component.*
 import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
-import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
@@ -65,61 +50,55 @@ fun ContactsScreen(
     ) {
         when (uiState.permissionState) {
             ContactsPermissionState.Checking -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                    Spacer(modifier = Modifier.padding(SpaceSmall))
-                    Text(text = stringResource(R.string.contacts_permission_checking))
-                }
+                KontactLoadingState()
             }
 
             ContactsPermissionState.NotRequested -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    PermissionContent(
-                        title = stringResource(R.string.contacts_permission_title),
-                        description = stringResource(R.string.contacts_permission_description),
-                        privacyNote = stringResource(R.string.contacts_permission_privacy_note),
-                        buttonLabel = stringResource(R.string.contacts_permission_allow),
-                        onButtonClick = onRequestPermission
-                    )
-                }
+                KontactEmptyState(
+                    title = stringResource(R.string.contacts_permission_title),
+                    description = stringResource(R.string.contacts_permission_description),
+                    icon = Icons.Default.Lock,
+                    action = {
+                        KontactPrimaryButton(
+                            onClick = onRequestPermission,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.contacts_permission_allow))
+                        }
+                    }
+                )
             }
 
             ContactsPermissionState.Denied -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    PermissionContent(
-                        title = stringResource(R.string.contacts_permission_denied_title),
-                        description = stringResource(R.string.contacts_permission_denied_description),
-                        buttonLabel = stringResource(R.string.contacts_permission_retry),
-                        onButtonClick = onRequestPermission
-                    )
-                }
+                KontactEmptyState(
+                    title = stringResource(R.string.contacts_permission_denied_title),
+                    description = stringResource(R.string.contacts_permission_denied_description),
+                    icon = Icons.Default.Lock,
+                    action = {
+                        KontactPrimaryButton(
+                            onClick = onRequestPermission,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.contacts_permission_retry))
+                        }
+                    }
+                )
             }
 
             ContactsPermissionState.PermanentlyDenied -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    PermissionContent(
-                        title = stringResource(R.string.contacts_permission_permanently_denied_title),
-                        description = stringResource(R.string.contacts_permission_permanently_denied_description),
-                        buttonLabel = stringResource(R.string.contacts_permission_open_settings),
-                        onButtonClick = onOpenSettings
-                    )
-                }
+                KontactEmptyState(
+                    title = stringResource(R.string.contacts_permission_permanently_denied_title),
+                    description = stringResource(R.string.contacts_permission_permanently_denied_description),
+                    icon = Icons.Default.Lock,
+                    action = {
+                        KontactPrimaryButton(
+                            onClick = onOpenSettings,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(text = stringResource(R.string.contacts_permission_open_settings))
+                        }
+                    }
+                )
             }
 
             ContactsPermissionState.Granted -> {
@@ -146,10 +125,11 @@ private fun GrantedContent(
     onContactClick: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.padding(SpaceSmall))
+        Spacer(modifier = Modifier.height(SpaceSmall))
         Text(
             text = stringResource(R.string.title_contacts),
-            style = MaterialTheme.typography.headlineLarge
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.semantics { heading() }
         )
         
         Row(
@@ -170,58 +150,33 @@ private fun GrantedContent(
 
         when {
             uiState.isLoading -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(48.dp))
-                    Spacer(modifier = Modifier.padding(SpaceSmall))
-                    Text(text = stringResource(R.string.contacts_loading))
-                }
+                KontactLoadingState()
             }
             uiState.errorMessageRes != null -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    InfoContent(
-                        icon = Icons.Default.ErrorOutline,
-                        title = stringResource(R.string.contacts_load_error_title),
-                        description = stringResource(uiState.errorMessageRes),
-                        buttonLabel = stringResource(R.string.contacts_retry),
-                        onButtonClick = onRetryLoading
-                    )
-                }
+                KontactErrorState(
+                    title = stringResource(R.string.contacts_load_error_title),
+                    description = stringResource(uiState.errorMessageRes),
+                    onRetry = onRetryLoading
+                )
             }
             uiState.visibleContacts.isEmpty() && uiState.searchQuery.isNotBlank() -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    InfoContent(
-                        icon = Icons.Default.SearchOff,
-                        title = stringResource(R.string.contacts_no_results_title),
-                        description = stringResource(R.string.contacts_no_results_description),
-                        buttonLabel = stringResource(R.string.contacts_clear_search_action),
-                        onButtonClick = onClearSearch
-                    )
-                }
+                KontactEmptyState(
+                    title = stringResource(R.string.contacts_no_results_title),
+                    description = stringResource(R.string.contacts_no_results_description),
+                    icon = Icons.Default.SearchOff,
+                    action = {
+                        TextButton(onClick = onClearSearch) {
+                            Text(stringResource(R.string.contacts_clear_search_action))
+                        }
+                    }
+                )
             }
             uiState.visibleContacts.isEmpty() && uiState.hasLoadedContacts -> {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    InfoContent(
-                        icon = Icons.Default.ContactPage,
-                        title = stringResource(R.string.contacts_empty_title),
-                        description = stringResource(R.string.contacts_empty_description)
-                    )
-                }
+                KontactEmptyState(
+                    title = stringResource(R.string.contacts_empty_title),
+                    description = stringResource(R.string.contacts_empty_description),
+                    icon = Icons.Default.ContactPage
+                )
             }
             else -> {
                 Text(
@@ -231,17 +186,18 @@ private fun GrantedContent(
                         uiState.visibleContacts.size
                     ),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = SpaceSmall)
                 )
                 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = SpaceMedium),
+                    contentPadding = PaddingValues(bottom = SpaceMedium),
                     verticalArrangement = Arrangement.spacedBy(SpaceSmall)
                 ) {
                     items(
                         items = uiState.visibleContacts,
-                        key = { "${it.lookupKey}_${it.id}" }
+                        key = { it.lookupKey }
                     ) { contact ->
                         ContactListItem(
                             contact = contact,
@@ -303,78 +259,6 @@ private fun ContactListItem(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun PermissionContent(
-    title: String,
-    description: String,
-    buttonLabel: String,
-    onButtonClick: () -> Unit,
-    privacyNote: String? = null
-) {
-    InfoContent(
-        icon = Icons.Default.Lock,
-        title = title,
-        description = description,
-        privacyNote = privacyNote,
-        buttonLabel = buttonLabel,
-        onButtonClick = onButtonClick
-    )
-}
-
-@Composable
-private fun InfoContent(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    buttonLabel: String? = null,
-    onButtonClick: (() -> Unit)? = null,
-    privacyNote: String? = null
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.padding(SpaceMedium))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.padding(SpaceSmall))
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (privacyNote != null) {
-            Spacer(modifier = Modifier.padding(SpaceSmall))
-            Text(
-                text = privacyNote,
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
-        if (buttonLabel != null && (onButtonClick != null)) {
-            Spacer(modifier = Modifier.padding(SpaceLarge))
-            KontactPrimaryButton(
-                onClick = onButtonClick,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = buttonLabel)
             }
         }
     }

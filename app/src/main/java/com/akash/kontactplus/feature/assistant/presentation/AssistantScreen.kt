@@ -14,14 +14,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
+import com.akash.kontactplus.core.designsystem.component.*
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
-import com.akash.kontactplus.feature.relationship.domain.model.ConnectionInsight
-import com.akash.kontactplus.feature.relationship.domain.model.ConnectionInsightAction
-import com.akash.kontactplus.feature.relationship.domain.model.ConnectionInsightSource
+import com.akash.kontactplus.feature.relationship.domain.model.*
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -54,10 +55,18 @@ fun AssistantScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = stringResource(R.string.assistant_title)) },
+                title = { 
+                    Text(
+                        text = stringResource(R.string.assistant_title),
+                        modifier = Modifier.semantics { heading() }
+                    ) 
+                },
                 actions = {
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.insights_settings))
+                        Icon(
+                            imageVector = Icons.Default.Settings, 
+                            contentDescription = stringResource(R.string.insights_settings)
+                        )
                     }
                 }
             )
@@ -100,8 +109,14 @@ fun AssistantScreen(
                             Icon(Icons.Default.AutoFixHigh, contentDescription = null)
                             Spacer(Modifier.width(SpaceMedium))
                             Column {
-                                Text(text = stringResource(R.string.ai_tools_title), style = MaterialTheme.typography.titleMedium)
-                                Text(text = stringResource(R.string.ai_tools_description), style = MaterialTheme.typography.bodySmall)
+                                Text(
+                                    text = stringResource(R.string.ai_tools_title), 
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = stringResource(R.string.ai_tools_description), 
+                                    style = MaterialTheme.typography.bodySmall
+                                )
                             }
                         }
                     }
@@ -110,13 +125,15 @@ fun AssistantScreen(
 
                 if (uiState.isLoading) {
                     item {
-                        Box(modifier = Modifier.fillMaxWidth().padding(SpaceMedium), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
+                        KontactLoadingState(modifier = Modifier.fillMaxWidth().height(200.dp))
                     }
                 } else if (uiState.insights.isEmpty()) {
                     item {
-                        AllCaughtUpState()
+                        KontactEmptyState(
+                            title = stringResource(R.string.assistant_all_caught_up),
+                            description = stringResource(R.string.assistant_all_caught_up_description),
+                            icon = Icons.Default.AutoAwesome
+                        )
                     }
                 } else {
                     // Insights Categorized
@@ -128,7 +145,7 @@ fun AssistantScreen(
 
                     if (needsAttention.isNotEmpty()) {
                         item { SectionHeader(stringResource(R.string.insights_needs_attention), MaterialTheme.colorScheme.error) }
-                        items(needsAttention) { insight ->
+                        items(needsAttention, key = { it.id }) { insight ->
                             InsightCard(
                                 insight = insight,
                                 onContactClick = onContactClick,
@@ -143,7 +160,7 @@ fun AssistantScreen(
 
                     if (followUps.isNotEmpty()) {
                         item { SectionHeader(stringResource(R.string.insights_follow_ups)) }
-                        items(followUps) { insight ->
+                        items(followUps, key = { it.id }) { insight ->
                             InsightCard(
                                 insight = insight,
                                 onContactClick = onContactClick,
@@ -158,7 +175,7 @@ fun AssistantScreen(
 
                     if (comingUp.isNotEmpty()) {
                         item { SectionHeader(stringResource(R.string.insights_coming_up)) }
-                        items(comingUp) { insight ->
+                        items(comingUp, key = { it.id }) { insight ->
                             InsightCard(
                                 insight = insight,
                                 onContactClick = onContactClick,
@@ -185,11 +202,21 @@ private fun CallHistoryDisclosureCard(onAccept: () -> Unit) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(modifier = Modifier.padding(SpaceMedium)) {
-            Text(text = stringResource(R.string.connection_insights_privacy_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                text = stringResource(R.string.connection_insights_privacy_title), 
+                style = MaterialTheme.typography.titleMedium
+            )
             Spacer(Modifier.height(SpaceSmall))
-            Text(text = stringResource(R.string.connection_insights_privacy_description), style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = stringResource(R.string.connection_insights_privacy_description), 
+                style = MaterialTheme.typography.bodySmall
+            )
             Spacer(Modifier.height(SpaceMedium))
-            Button(onClick = onAccept, modifier = Modifier.align(Alignment.End)) {
+            Button(
+                onClick = onAccept, 
+                modifier = Modifier.align(Alignment.End),
+                shape = MaterialTheme.shapes.small
+            ) {
                 Text(stringResource(R.string.connection_insights_accept))
             }
         }
@@ -206,7 +233,7 @@ private fun InsightCard(
     onDraftMessage: (ConnectionInsight) -> Unit,
     onInfoClick: (ConnectionInsight) -> Unit
 ) {
-    Card(
+    KontactCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = { onContactClick(insight.lookupKey) }
     ) {
@@ -219,13 +246,24 @@ private fun InsightCard(
                 Text(
                     text = stringResource(insight.titleRes),
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
-                IconButton(onClick = { onInfoClick(insight) }, modifier = Modifier.size(24.dp)) {
-                    Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
+                IconButton(
+                    onClick = { onInfoClick(insight) }, 
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info, 
+                        contentDescription = "Explanation", 
+                        modifier = Modifier.size(16.dp)
+                    )
                 }
             }
-            Text(text = formatInsightExplanation(insight), style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = formatInsightExplanation(insight), 
+                style = MaterialTheme.typography.titleSmall
+            )
             
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -260,40 +298,26 @@ private fun InsightCard(
 private fun formatInsightExplanation(insight: ConnectionInsight): String {
     return when (insight.explanationRes) {
         R.string.insight_missed_call_explanation -> {
-            val timestamp = insight.explanationArgs.first().toLong()
-            val time = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
-            val now = LocalDate.now()
-            val days = ChronoUnit.DAYS.between(time, now).toInt()
-            val timeAgo = pluralStringResource(R.plurals.insight_days_ago, days, days)
+            val daysAgo = insight.explanationArgs.first().toInt()
+            val timeAgo = pluralStringResource(R.plurals.insight_days_ago, daysAgo, daysAgo)
             stringResource(R.string.insight_missed_call_explanation, timeAgo)
         }
+        R.string.insight_follow_up_due_explanation -> {
+            val cadenceName = insight.explanationArgs[0]
+            val daysSince = insight.explanationArgs[1].toInt()
+            val cadenceRes = when (cadenceName) {
+                "Weekly" -> R.string.follow_up_weekly
+                "EveryTwoWeeks" -> R.string.follow_up_two_weeks
+                "Monthly" -> R.string.follow_up_monthly
+                "EveryThreeMonths" -> R.string.follow_up_three_months
+                else -> R.string.follow_up_custom
+            }
+            stringResource(R.string.insight_follow_up_due_explanation, stringResource(cadenceRes).lowercase(), daysSince)
+        }
+        R.string.insight_date_approaching_explanation -> {
+            stringResource(R.string.insight_date_approaching_explanation, insight.explanationArgs[0], insight.explanationArgs[1])
+        }
         else -> stringResource(insight.explanationRes, *insight.explanationArgs.toTypedArray())
-    }
-}
-
-@Composable
-private fun AllCaughtUpState() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            Icons.Default.AutoAwesome,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(SpaceMedium))
-        Text(
-            text = stringResource(R.string.assistant_all_caught_up),
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Text(
-            text = stringResource(R.string.assistant_all_caught_up_description),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
     }
 }
 
@@ -303,7 +327,7 @@ private fun SectionHeader(title: String, color: androidx.compose.ui.graphics.Col
         text = title,
         style = MaterialTheme.typography.titleMedium,
         color = color,
-        modifier = Modifier.padding(vertical = 8.dp)
+        modifier = Modifier.padding(vertical = 8.dp).semantics { heading() }
     )
 }
 
@@ -321,20 +345,35 @@ fun InsightExplanationSheet(
             modifier = Modifier.padding(16.dp).fillMaxWidth().padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(text = stringResource(R.string.insight_why_shown), style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = stringResource(R.string.insight_why_shown), 
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() }
+            )
             
             Text(text = formatInsightExplanation(insight), style = MaterialTheme.typography.bodyLarge)
             
             HorizontalDivider()
             
             Column {
-                Text(text = stringResource(R.string.insight_data_used), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    text = stringResource(R.string.insight_data_used), 
+                    style = MaterialTheme.typography.labelLarge, 
+                    color = MaterialTheme.colorScheme.primary
+                )
                 Text(text = mapInsightSourceToData(insight.source), style = MaterialTheme.typography.bodyMedium)
             }
             
             Column {
-                Text(text = stringResource(R.string.insight_online_ai), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                Text(text = stringResource(R.string.insight_online_ai_not_used), style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = stringResource(R.string.insight_online_ai), 
+                    style = MaterialTheme.typography.labelLarge, 
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = stringResource(R.string.insight_online_ai_not_used), 
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }

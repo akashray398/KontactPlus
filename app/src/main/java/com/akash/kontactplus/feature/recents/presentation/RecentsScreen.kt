@@ -1,45 +1,24 @@
 package com.akash.kontactplus.feature.recents.presentation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.SearchOff
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akash.kontactplus.R
-import com.akash.kontactplus.core.designsystem.component.ContactAvatar
-import com.akash.kontactplus.core.designsystem.component.KontactCard
-import com.akash.kontactplus.core.designsystem.component.KontactPrimaryButton
+import com.akash.kontactplus.core.designsystem.component.*
 import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
-import com.akash.kontactplus.core.designsystem.theme.SpaceLarge
 import com.akash.kontactplus.core.designsystem.theme.SpaceMedium
 import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
 import com.akash.kontactplus.feature.contacts.presentation.ContactsSearchBar
@@ -79,7 +58,8 @@ fun RecentsScreen(
         ) {
             Text(
                 text = stringResource(R.string.recents_title),
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.semantics { heading() }
             )
             if (uiState.accessState == RecentsAccessState.Ready) {
                 IconButton(onClick = onRefresh) {
@@ -93,53 +73,64 @@ fun RecentsScreen(
 
         when (uiState.accessState) {
             RecentsAccessState.CheckingRole -> {
-                FullScreenLoading()
+                KontactLoadingState()
             }
             RecentsAccessState.RoleUnsupported -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Info,
                     title = stringResource(R.string.recents_role_unsupported_title),
                     description = stringResource(R.string.recents_role_unsupported_description)
                 )
             }
             RecentsAccessState.RoleRequired -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Phone,
                     title = stringResource(R.string.recents_default_role_title),
                     description = stringResource(R.string.recents_default_role_description),
-                    privacyNote = stringResource(R.string.recents_default_role_privacy),
-                    buttonLabel = stringResource(R.string.recents_choose_app),
-                    onButtonClick = onRequestRole
+                    action = {
+                        KontactPrimaryButton(onClick = onRequestRole, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.recents_choose_app))
+                        }
+                    }
                 )
             }
             RecentsAccessState.CheckingPermission -> {
-                FullScreenLoading()
+                KontactLoadingState()
             }
             RecentsAccessState.PermissionNotRequested -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Lock,
                     title = stringResource(R.string.recents_permission_title),
                     description = stringResource(R.string.recents_permission_description),
-                    buttonLabel = stringResource(R.string.recents_permission_allow),
-                    onButtonClick = onRequestPermission
+                    action = {
+                        KontactPrimaryButton(onClick = onRequestPermission, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.recents_permission_allow))
+                        }
+                    }
                 )
             }
             RecentsAccessState.PermissionDenied -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Lock,
                     title = stringResource(R.string.recents_permission_denied_title),
                     description = stringResource(R.string.recents_permission_denied_description),
-                    buttonLabel = stringResource(R.string.recents_permission_retry),
-                    onButtonClick = onRequestPermission
+                    action = {
+                        KontactPrimaryButton(onClick = onRequestPermission, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.recents_permission_retry))
+                        }
+                    }
                 )
             }
             RecentsAccessState.PermissionPermanentlyDenied -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.Lock,
                     title = stringResource(R.string.recents_permission_denied_title),
                     description = stringResource(R.string.recents_permission_settings),
-                    buttonLabel = stringResource(R.string.recents_permission_settings),
-                    onButtonClick = onOpenSettings
+                    action = {
+                        KontactPrimaryButton(onClick = onOpenSettings, modifier = Modifier.fillMaxWidth()) {
+                            Text(text = stringResource(R.string.recents_permission_settings))
+                        }
+                    }
                 )
             }
             RecentsAccessState.Ready -> {
@@ -174,28 +165,29 @@ private fun ReadyContent(
 
         when {
             uiState.isLoading -> {
-                FullScreenLoading(label = stringResource(R.string.recents_loading))
+                KontactLoadingState()
             }
             uiState.errorMessageRes != null -> {
-                InfoState(
-                    icon = Icons.Default.Info,
+                KontactErrorState(
                     title = stringResource(R.string.recents_error_title),
                     description = stringResource(uiState.errorMessageRes),
-                    buttonLabel = stringResource(R.string.contacts_retry),
-                    onButtonClick = onRetry
+                    onRetry = onRetry
                 )
             }
             uiState.visibleCalls.isEmpty() && uiState.searchQuery.isNotBlank() -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.SearchOff,
                     title = stringResource(R.string.recents_no_results_title),
                     description = stringResource(R.string.recents_no_results_description),
-                    buttonLabel = stringResource(R.string.recents_clear_search),
-                    onButtonClick = onClearSearch
+                    action = {
+                        TextButton(onClick = onClearSearch) {
+                            Text(stringResource(R.string.recents_clear_search))
+                        }
+                    }
                 )
             }
             uiState.visibleCalls.isEmpty() -> {
-                InfoState(
+                KontactEmptyState(
                     icon = Icons.Default.History,
                     title = stringResource(R.string.recents_empty_title),
                     description = stringResource(R.string.recents_empty_description)
@@ -220,7 +212,7 @@ private fun RecentsList(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = SpaceMedium),
+        contentPadding = PaddingValues(bottom = SpaceMedium),
         verticalArrangement = Arrangement.spacedBy(SpaceSmall)
     ) {
         items(
@@ -324,70 +316,4 @@ private fun formatTimestamp(timestamp: Long): String {
     val date = Date(timestamp)
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
     return sdf.format(date)
-}
-
-@Composable
-private fun FullScreenLoading(label: String? = null) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator(modifier = Modifier.size(48.dp))
-        if (label != null) {
-            Spacer(modifier = Modifier.height(SpaceMedium))
-            Text(text = label)
-        }
-    }
-}
-
-@Composable
-private fun InfoState(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    buttonLabel: String? = null,
-    onButtonClick: (() -> Unit)? = null,
-    privacyNote: String? = null
-) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(SpaceMedium))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(SpaceSmall))
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (privacyNote != null) {
-            Spacer(modifier = Modifier.height(SpaceSmall))
-            Text(
-                text = privacyNote,
-                style = MaterialTheme.typography.labelMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
-        if (buttonLabel != null && onButtonClick != null) {
-            Spacer(modifier = Modifier.height(SpaceLarge))
-            KontactPrimaryButton(onClick = onButtonClick, modifier = Modifier.fillMaxWidth()) {
-                Text(text = buttonLabel)
-            }
-        }
-    }
 }
