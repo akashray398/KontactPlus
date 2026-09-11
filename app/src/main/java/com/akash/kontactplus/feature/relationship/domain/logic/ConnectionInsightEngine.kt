@@ -62,7 +62,8 @@ class ConnectionInsightEngine @Inject constructor() {
                     type = if (isOverdue) ConnectionInsightType.ReminderOverdue else ConnectionInsightType.ReminderDue,
                     priority = if (isOverdue) ConnectionInsightPriority.Overdue else ConnectionInsightPriority.Due,
                     titleRes = if (isOverdue) R.string.insight_reminder_overdue_title else R.string.insight_reminder_due_title,
-                    explanation = reminder.title,
+                    explanationRes = R.string.relationship_reminders,
+                    explanationArgs = listOf(reminder.title),
                     occurredAt = reminder.scheduledAt,
                     dueAt = reminder.scheduledAt,
                     availableActions = listOf(ConnectionInsightAction.MarkDone, ConnectionInsightAction.ViewContact),
@@ -86,14 +87,14 @@ class ConnectionInsightEngine @Inject constructor() {
             lastMissed.isAfter(windowStart) && 
             (lastOutgoing == null || lastOutgoing.isBefore(lastMissed))
         }.map { summary ->
-            val timeDesc = formatTimeAgo(summary.lastMissedCallAt!!, now, zoneId)
             ConnectionInsight(
-                id = "missed_${summary.lookupKey}_${summary.lastMissedCallAt.toEpochMilli()}",
+                id = "missed_${summary.lookupKey}_${summary.lastMissedCallAt!!.toEpochMilli()}",
                 lookupKey = summary.lookupKey,
                 type = ConnectionInsightType.UnreturnedMissedCall,
                 priority = ConnectionInsightPriority.Due,
                 titleRes = R.string.insight_missed_call_title,
-                explanation = "You may want to return a missed call from $timeDesc.",
+                explanationRes = R.string.insight_missed_call_explanation,
+                explanationArgs = listOf(summary.lastMissedCallAt.toEpochMilli().toString()), // Presentation will format
                 occurredAt = summary.lastMissedCallAt,
                 dueAt = summary.lastMissedCallAt,
                 availableActions = listOf(ConnectionInsightAction.Call, ConnectionInsightAction.Dismiss),
@@ -119,7 +120,8 @@ class ConnectionInsightEngine @Inject constructor() {
                     type = ConnectionInsightType.ImportantDateApproaching,
                     priority = priority,
                     titleRes = R.string.insight_date_approaching_title,
-                    explanation = "${date.title} is coming up in $daysUntil days.",
+                    explanationRes = R.string.insight_date_approaching_explanation,
+                    explanationArgs = listOf(date.title, daysUntil.toString()),
                     occurredAt = null,
                     dueAt = nextOccurrence.atStartOfDay(ZoneId.systemDefault()).toInstant(),
                     availableActions = listOf(ConnectionInsightAction.DraftMessage, ConnectionInsightAction.ViewContact, ConnectionInsightAction.Dismiss),
@@ -144,13 +146,15 @@ class ConnectionInsightEngine @Inject constructor() {
             
             if (today.isAfter(nextFollowUp) || today == nextFollowUp) {
                 val isOverdue = today.isAfter(nextFollowUp.plusDays(7))
+                val daysSince = ChronoUnit.DAYS.between(lastInteraction, today)
                 ConnectionInsight(
                     id = "cadence_${pref.lookupKey}_${nextFollowUp}",
                     lookupKey = pref.lookupKey,
                     type = if (isOverdue) ConnectionInsightType.FollowUpOverdue else ConnectionInsightType.FollowUpDue,
                     priority = if (isOverdue) ConnectionInsightPriority.Overdue else ConnectionInsightPriority.Normal,
                     titleRes = R.string.insight_follow_up_due_title,
-                    explanation = "Your ${pref.cadence.name.lowercase()} follow-up is due. Last call was ${ChronoUnit.DAYS.between(lastInteraction, today)} days ago.",
+                    explanationRes = R.string.insight_follow_up_due_explanation,
+                    explanationArgs = listOf(pref.cadence.name.lowercase(), daysSince.toString()),
                     occurredAt = summary.lastInteractionAt,
                     dueAt = nextFollowUp.atStartOfDay(zoneId).toInstant(),
                     availableActions = listOf(ConnectionInsightAction.Call, ConnectionInsightAction.DraftMessage, ConnectionInsightAction.Dismiss),
@@ -177,7 +181,6 @@ class ConnectionInsightEngine @Inject constructor() {
         if (next.isBefore(today)) {
             next = next.plusYears(1)
         }
-        // Leap year handling: if original was Feb 29 and next year isn't, use Feb 28.
         if (date.monthValue == 2 && date.dayOfMonth == 29 && !next.isLeapYear) {
             next = next.withDayOfMonth(28)
         }
@@ -192,17 +195,6 @@ class ConnectionInsightEngine @Inject constructor() {
             FollowUpCadence.EveryThreeMonths -> last.plusMonths(3)
             FollowUpCadence.Custom -> last.plusDays((customDays ?: 30).toLong())
             FollowUpCadence.Disabled -> last.plusYears(100)
-        }
-    }
-
-    private fun formatTimeAgo(time: Instant, now: Instant, zoneId: ZoneId): String {
-        val then = time.atZone(zoneId).toLocalDate()
-        val today = now.atZone(zoneId).toLocalDate()
-        val days = ChronoUnit.DAYS.between(then, today)
-        return when {
-            days == 0L -> "today"
-            days == 1L -> "yesterday"
-            else -> "$days days ago"
         }
     }
 }

@@ -7,6 +7,8 @@ import com.akash.kontactplus.feature.contacts.domain.usecase.GetContactUseCase
 import com.akash.kontactplus.feature.favourites.domain.repository.FavouritesRepository
 import com.akash.kontactplus.feature.favourites.domain.usecase.IsContactFavouriteUseCase
 import com.akash.kontactplus.feature.favourites.domain.usecase.ToggleFavouriteContactUseCase
+import com.akash.kontactplus.feature.relationship.domain.repository.RelationshipRepository
+import com.akash.kontactplus.feature.relationship.domain.usecase.ObserveContactRelationshipUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +33,7 @@ class ContactDetailsViewModelTest {
     private lateinit var getContactUseCase: GetContactUseCase
     private lateinit var isContactFavouriteUseCase: IsContactFavouriteUseCase
     private lateinit var toggleFavouriteContactUseCase: ToggleFavouriteContactUseCase
+    private lateinit var observeContactRelationshipUseCase: ObserveContactRelationshipUseCase
 
     private val lookupKey = "k1"
     private val contact = Contact(1, lookupKey, "Akash")
@@ -43,6 +46,7 @@ class ContactDetailsViewModelTest {
         getContactUseCase = GetContactUseCase(fakeContactsRepository)
         isContactFavouriteUseCase = IsContactFavouriteUseCase(fakeFavouritesRepository)
         toggleFavouriteContactUseCase = ToggleFavouriteContactUseCase(fakeFavouritesRepository)
+        observeContactRelationshipUseCase = ObserveContactRelationshipUseCase(FakeRelationshipRepository())
     }
 
     @After
@@ -89,8 +93,35 @@ class ContactDetailsViewModelTest {
             SavedStateHandle(mapOf(ContactDetailsViewModel.KEY_LOOKUP_KEY to key)),
             getContactUseCase,
             isContactFavouriteUseCase,
-            toggleFavouriteContactUseCase
+            toggleFavouriteContactUseCase,
+            observeContactRelationshipUseCase
         )
+    }
+
+    private class FakeRelationshipRepository : RelationshipRepository {
+        override fun observeRelationship(lookupKey: String): Flow<com.akash.kontactplus.feature.relationship.domain.model.ContactRelationship?> = flowOf(null)
+        override fun observeAllTags(): Flow<List<com.akash.kontactplus.feature.relationship.domain.model.RelationshipTag>> = flowOf(emptyList())
+        override fun observeAllUpcomingDates(): Flow<List<com.akash.kontactplus.feature.relationship.domain.model.ImportantDate>> = flowOf(emptyList())
+        override fun observeScheduledReminders(): Flow<List<com.akash.kontactplus.feature.relationship.domain.model.RelationshipReminder>> = flowOf(emptyList())
+        override fun observeOverdueReminders(): Flow<List<com.akash.kontactplus.feature.relationship.domain.model.RelationshipReminder>> = flowOf(emptyList())
+        override suspend fun savePrivateNote(lookupKey: String, note: String): Result<Unit> = Result.success(Unit)
+        override suspend fun createTag(name: String, colorKey: String): Result<Long> = Result.success(0L)
+        override suspend fun assignTagToContact(lookupKey: String, tagId: Long): Result<Unit> = Result.success(Unit)
+        override suspend fun removeTagFromContact(lookupKey: String, tagId: Long): Result<Unit> = Result.success(Unit)
+        override suspend fun saveImportantDate(importantDate: com.akash.kontactplus.feature.relationship.domain.model.ImportantDate): Result<Unit> = Result.success(Unit)
+        override suspend fun deleteImportantDate(id: Long): Result<Unit> = Result.success(Unit)
+        override suspend fun scheduleReminder(reminder: com.akash.kontactplus.feature.relationship.domain.model.RelationshipReminder): Result<Unit> = Result.success(Unit)
+        override suspend fun updateReminderWorkId(reminderId: String, workId: String?): Result<Unit> = Result.success(Unit)
+        override suspend fun completeReminder(reminderId: String): Result<Unit> = Result.success(Unit)
+        override suspend fun cancelReminder(reminderId: String): Result<Unit> = Result.success(Unit)
+        override fun observeFollowUpPreference(lookupKey: String): Flow<com.akash.kontactplus.feature.relationship.domain.model.ContactFollowUpPreference?> = flowOf(null)
+        override fun observeAllEnabledFollowUpPreferences(): Flow<List<com.akash.kontactplus.feature.relationship.domain.model.ContactFollowUpPreference>> = flowOf(emptyList())
+        override suspend fun saveFollowUpPreference(preference: com.akash.kontactplus.feature.relationship.domain.model.ContactFollowUpPreference): Result<Unit> = Result.success(Unit)
+        override fun observeSuggestionActionsForContact(lookupKey: String): Flow<List<com.akash.kontactplus.feature.relationship.domain.repository.ConnectionSuggestionAction>> = flowOf(emptyList())
+        override fun observeNonActiveSuggestionActions(): Flow<List<com.akash.kontactplus.feature.relationship.domain.repository.ConnectionSuggestionAction>> = flowOf(emptyList())
+        override suspend fun saveSuggestionAction(action: com.akash.kontactplus.feature.relationship.domain.repository.ConnectionSuggestionAction): Result<Unit> = Result.success(Unit)
+        override suspend fun deleteSuggestionAction(key: String): Result<Unit> = Result.success(Unit)
+        override suspend fun clearAllSuggestionActions(): Result<Unit> = Result.success(Unit)
     }
 
     private class FakeContactsRepository : ContactsRepository {

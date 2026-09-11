@@ -329,9 +329,11 @@
     <string name="insight_one_week">1 week</string>
     <string name="insight_custom_date">Custom date</string>
     <string name="insight_missed_call_title">Unreturned missed call</string>
-    <string name="insight_missed_call_explanation">You may want to return a missed call from %s.</string>
+    <string name="insight_missed_call_explanation">You may want to return a missed call from %1$s.</string>
     <string name="insight_date_approaching_title">Important date approaching</string>
+    <string name="insight_date_approaching_explanation">%1$s is coming up in %2$s days.</string>
     <string name="insight_follow_up_due_title">Follow-up due</string>
+    <string name="insight_follow_up_due_explanation">Your %1$s follow-up is due. Last interaction was %2$s days ago.</string>
     <string name="insight_reminder_due_title">Reminder due</string>
     <string name="insight_reminder_overdue_title">Reminder overdue</string>
     <string name="insights_needs_attention">Needs Attention</string>
@@ -345,6 +347,12 @@
     <string name="insights_clear_dismissed_confirmation">This will reset snooze and dismissal states. Continue?</string>
     <string name="insights_settings">Insight Settings</string>
     <string name="insights_learn_more">Learn how suggestions work</string>
+    <string name="insight_online_ai">Online AI</string>
+
+    <plurals name="insight_days_ago">
+        <item quantity="one">today</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
 
     <!-- AI Tools -->
     <string name="ai_tools_title">AI Writing Tools</string>

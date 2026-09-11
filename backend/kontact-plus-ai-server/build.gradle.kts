@@ -1,11 +1,7 @@
-val ktor_version: String by project
-val kotlin_version: String by project
-val logback_version: String by project
-
 plugins {
-    kotlin("jvm") version "2.0.0"
-    id("io.ktor.plugin") version "2.3.11"
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0"
+    application
+    kotlin("jvm")
+    kotlin("plugin.serialization")
 }
 
 group = "com.akash.kontactplus"
@@ -15,9 +11,11 @@ application {
     mainClass.set("com.akash.kontactplus.ai.ApplicationKt")
 }
 
-repositories {
-    mavenCentral()
+kotlin {
+    jvmToolchain(11)
 }
+
+val ktor_version = libs.versions.ktor.get()
 
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
@@ -28,6 +26,6 @@ dependencies {
     implementation("io.ktor:ktor-client-cio-jvm:$ktor_version")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktor_version")
     
-    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation(libs.logback)
     implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 }

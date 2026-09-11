@@ -3,7 +3,8 @@ package com.akash.kontactplus.ai
 import io.github.cdimascio.dotenv.dotenv
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.* as ClientContentNegotiation
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -11,7 +12,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -41,6 +42,14 @@ fun Application.module() {
         install(ClientContentNegotiation) {
             json()
         }
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30000
+            connectTimeoutMillis = 10000
+        }
+    }
+
+    environment.monitor.subscribe(ApplicationStopped) {
+        httpClient.close()
     }
 
     routing {
@@ -49,14 +58,30 @@ fun Application.module() {
         }
 
         post("/api/v1/ai/generate") {
-            val request = call.receive<AiRequestDto>()
+            val request = try {
+                call.receive<AiRequestDto>()
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.BadRequest, "Invalid request body.")
+                return@post
+            }
             
+            // Validation
+            if (request.action.isBlank() || request.instruction.isBlank() || request.tone.isBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Action, tone, and instruction are required.")
+                return@post
+            }
+
+            if (request.instruction.length > 1000) {
+                call.respond(HttpStatusCode.BadRequest, "Instruction too long.")
+                return@post
+            }
+
             val apiKey = System.getenv("AI_PROVIDER_API_KEY") ?: dotenv["AI_PROVIDER_API_KEY"]
             val baseUrl = System.getenv("AI_PROVIDER_BASE_URL") ?: dotenv["AI_PROVIDER_BASE_URL"]
             val model = System.getenv("AI_PROVIDER_MODEL") ?: dotenv["AI_PROVIDER_MODEL"] ?: "gpt-3.5-turbo"
 
             if (apiKey.isNullOrEmpty() || baseUrl.isNullOrEmpty()) {
-                call.respond(HttpStatusCode.InternalServerError, "Backend not configured.")
+                call.respond(HttpStatusCode.ServiceUnavailable, "AI backend not fully configured.")
                 return@post
             }
 
@@ -78,6 +103,7 @@ fun Application.module() {
                                 put("content", request.instruction)
                             }
                         })
+                        put("max_tokens", 1000)
                     })
                 }
 
@@ -90,11 +116,14 @@ fun Application.module() {
                         text = text,
                         modelLabel = model
                     ))
+                } else if (aiResponse.status == HttpStatusCode.TooManyRequests) {
+                    call.respond(HttpStatusCode.TooManyRequests, "Provider rate limit reached.")
                 } else {
-                    call.respond(HttpStatusCode.BadGateway, "AI Provider returned error: ${aiResponse.status}")
+                    call.respond(HttpStatusCode.BadGateway, "AI Provider failure.")
                 }
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Generation failed: ${e.message}")
+                // Do not leak exception details to client
+                call.respond(HttpStatusCode.InternalServerError, "Generation failed internally.")
             }
         }
     }

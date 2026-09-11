@@ -85,6 +85,15 @@ fun AiResultScreen(
                 AiGenerationResult.RateLimited -> {
                     ErrorState(stringResource(R.string.ai_rate_limited))
                 }
+                AiGenerationResult.Timeout -> {
+                    ErrorState("Request timed out. Please try again.")
+                }
+                AiGenerationResult.BackendNotConfigured -> {
+                    ErrorState(stringResource(R.string.ai_configuration_missing))
+                }
+                AiGenerationResult.Unauthorized -> {
+                    ErrorState("Unauthorized. Please check backend configuration.")
+                }
                 else -> {
                     ErrorState(stringResource(R.string.ai_failed))
                 }
@@ -95,7 +104,14 @@ fun AiResultScreen(
 
 @Composable
 private fun ErrorState(message: String) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(text = message, color = MaterialTheme.colorScheme.error)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+    ) {
+        Text(
+            text = message, 
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(16.dp)
+        )
     }
 }

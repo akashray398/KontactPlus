@@ -63,8 +63,8 @@ fun AssistantRoute(
         onMarkReminderDone = viewModel::onMarkReminderDone,
         onDraftGreeting = { insight ->
             // Map insight to AI action and instruction
-            val action = "FollowUpDraft" // Default for now
-            val instruction = insight.explanation
+            val action = "FollowUpDraft" 
+            val instruction = "Draft a polite follow-up message."
             onDraftMessage(action, instruction)
         },
         snackbarHostState = snackbarHostState,

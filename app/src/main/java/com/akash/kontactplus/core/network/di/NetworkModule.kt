@@ -19,10 +19,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL_DEBUG = "http://10.0.2.2:5000/"
-    // Placeholder for production. AI disabled until configured.
-    private const val BASE_URL_PROD = "https://ai-proxy.kontactplus.com/"
-
     @Provides
     @Singleton
     fun provideJson(): Json = Json {
@@ -53,10 +49,8 @@ object NetworkModule {
         okHttpClient: OkHttpClient,
         json: Json
     ): AiApiService {
-        val baseUrl = if (BuildConfig.DEBUG) BASE_URL_DEBUG else BASE_URL_PROD
-        
         return Retrofit.Builder()
-            .baseUrl(baseUrl)
+            .baseUrl(BuildConfig.AI_BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()

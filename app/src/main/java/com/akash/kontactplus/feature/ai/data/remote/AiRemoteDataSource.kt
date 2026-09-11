@@ -21,14 +21,19 @@ class RetrofitAiRemoteDataSource @Inject constructor(
                 } ?: AiGenerationResult.Failed(com.akash.kontactplus.R.string.recents_error_description)
             } else {
                 when (response.code()) {
+                    401 -> AiGenerationResult.Unauthorized
                     429 -> AiGenerationResult.RateLimited
-                    403 -> AiGenerationResult.Unavailable
+                    503 -> AiGenerationResult.Unavailable
+                    504 -> AiGenerationResult.Timeout
                     else -> AiGenerationResult.Failed(com.akash.kontactplus.R.string.recents_error_description)
                 }
             }
-        } catch (e: Exception) {
-            // Note: In a real app, distinguish between connection issues and other exceptions.
+        } catch (e: java.net.SocketTimeoutException) {
+            AiGenerationResult.Timeout
+        } catch (e: java.io.IOException) {
             AiGenerationResult.Offline
+        } catch (e: Exception) {
+            AiGenerationResult.Failed(com.akash.kontactplus.R.string.recents_error_description)
         }
     }
 }

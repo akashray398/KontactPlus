@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -21,6 +22,10 @@ import com.akash.kontactplus.core.designsystem.theme.SpaceSmall
 import com.akash.kontactplus.feature.relationship.domain.model.ConnectionInsight
 import com.akash.kontactplus.feature.relationship.domain.model.ConnectionInsightAction
 import com.akash.kontactplus.feature.relationship.domain.model.ConnectionInsightSource
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,7 +121,7 @@ fun AssistantScreen(
                 } else {
                     // Insights Categorized
                     val needsAttention = uiState.insights.filter { 
-                        it.source == ConnectionInsightSource.Reminder || it.source == ConnectionInsightSource.MissedCall 
+                        (it.source == ConnectionInsightSource.Reminder) || (it.source == ConnectionInsightSource.MissedCall) 
                     }
                     val followUps = uiState.insights.filter { it.source == ConnectionInsightSource.UserCadence }
                     val comingUp = uiState.insights.filter { it.source == ConnectionInsightSource.ImportantDate }
@@ -220,7 +225,7 @@ private fun InsightCard(
                     Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
                 }
             }
-            Text(text = insight.explanation, style = MaterialTheme.typography.titleSmall)
+            Text(text = formatInsightExplanation(insight), style = MaterialTheme.typography.titleSmall)
             
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -248,6 +253,21 @@ private fun InsightCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun formatInsightExplanation(insight: ConnectionInsight): String {
+    return when (insight.explanationRes) {
+        R.string.insight_missed_call_explanation -> {
+            val timestamp = insight.explanationArgs.first().toLong()
+            val time = Instant.ofEpochMilli(timestamp).atZone(ZoneId.systemDefault()).toLocalDate()
+            val now = LocalDate.now()
+            val days = ChronoUnit.DAYS.between(time, now).toInt()
+            val timeAgo = pluralStringResource(R.plurals.insight_days_ago, days, days)
+            stringResource(R.string.insight_missed_call_explanation, timeAgo)
+        }
+        else -> stringResource(insight.explanationRes, *insight.explanationArgs.toTypedArray())
     }
 }
 
@@ -303,7 +323,7 @@ fun InsightExplanationSheet(
         ) {
             Text(text = stringResource(R.string.insight_why_shown), style = MaterialTheme.typography.titleLarge)
             
-            Text(text = insight.explanation, style = MaterialTheme.typography.bodyLarge)
+            Text(text = formatInsightExplanation(insight), style = MaterialTheme.typography.bodyLarge)
             
             HorizontalDivider()
             
@@ -313,7 +333,7 @@ fun InsightExplanationSheet(
             }
             
             Column {
-                Text(text = "Online AI", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                Text(text = stringResource(R.string.insight_online_ai), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                 Text(text = stringResource(R.string.insight_online_ai_not_used), style = MaterialTheme.typography.bodyMedium)
             }
         }

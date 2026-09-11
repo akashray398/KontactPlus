@@ -24,9 +24,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        buildConfigField("String", "AI_BASE_URL", "\"https://ai-proxy.kontactplus.com/\"")
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "AI_BASE_URL", "\"http://10.0.2.2:5000/\"")
+        }
         release {
             optimization {
                 enable = false

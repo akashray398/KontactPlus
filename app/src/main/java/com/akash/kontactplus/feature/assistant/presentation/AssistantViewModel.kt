@@ -17,7 +17,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AssistantViewModel @Inject constructor(
-    private val observeAssistantDashboardUseCase: ObserveAssistantDashboardUseCase,
     private val observeConnectionInsightsUseCase: ObserveConnectionInsightsUseCase,
     private val connectionInsightsRepository: ConnectionInsightsRepository,
     private val acceptCallHistoryDisclosureUseCase: AcceptCallHistoryDisclosureUseCase,
@@ -114,7 +113,6 @@ sealed interface AssistantUiEvent {
 
 data class AssistantUiState(
     val isLoading: Boolean = false,
-    val dashboard: AssistantDashboard = AssistantDashboard(),
     val insights: List<ConnectionInsight> = emptyList(),
     val hasAcceptedCallHistoryDisclosure: Boolean = false,
     val isCallHistoryInsightsEnabled: Boolean = false,

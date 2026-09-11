@@ -10,5 +10,8 @@ sealed interface AiGenerationResult {
     data object Offline : AiGenerationResult
     data object RateLimited : AiGenerationResult
     data object Unavailable : AiGenerationResult
+    data object BackendNotConfigured : AiGenerationResult
+    data object Timeout : AiGenerationResult
+    data object Unauthorized : AiGenerationResult
     data class Failed(val errorRes: Int) : AiGenerationResult
 }

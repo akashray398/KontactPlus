@@ -82,6 +82,17 @@ class AiViewModel @Inject constructor(
     fun onGenerate() {
         val context = _uiState.value.draftContext ?: return
         
+        if (com.akash.kontactplus.BuildConfig.AI_BASE_URL.contains("kontactplus.com")) {
+            // For Step 15, we treat this as unconfigured in production.
+            _uiState.update { 
+                it.copy(
+                    generationResult = AiGenerationResult.BackendNotConfigured,
+                    step = AiFlowStep.Result
+                ) 
+            }
+            return
+        }
+
         _uiState.update { it.copy(isGenerating = true) }
         
         viewModelScope.launch {
