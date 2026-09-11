@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
 import android.telecom.TelecomManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +34,12 @@ fun DialpadRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { _ ->
+        // Re-check status will happen via lifecycle
+    }
 
     val checkStatus = {
         val isRoleHeld = telecomRoleManager.getDialerRoleState() == DialerRoleState.Held
@@ -84,10 +92,7 @@ fun DialpadRoute(
         },
         onRequestCallPermission = {
             viewModel.onPermissionRequestStarted()
-            val activity = context as? androidx.activity.ComponentActivity
-            activity?.let {
-                ActivityCompat.requestPermissions(it, arrayOf(Manifest.permission.CALL_PHONE), 0)
-            }
+            permissionLauncher.launch(Manifest.permission.CALL_PHONE)
         },
         onOpenSettings = {
             val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

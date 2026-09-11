@@ -38,7 +38,10 @@ class TelecomRoleManager @Inject constructor(
         if (!isTelecomSupported()) return DialerRoleState.Unsupported
         
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val isHeld = roleManager?.isRoleHeld(RoleManager.ROLE_DIALER) == true
+            val manager = roleManager ?: return DialerRoleState.Unsupported
+            if (!manager.isRoleAvailable(RoleManager.ROLE_DIALER)) return DialerRoleState.Unsupported
+            
+            val isHeld = manager.isRoleHeld(RoleManager.ROLE_DIALER)
             if (isHeld) DialerRoleState.Held else DialerRoleState.NotHeld
         } else {
             // For pre-Q devices, we check if we are the default dialer through TelecomManager
@@ -54,6 +57,7 @@ class TelecomRoleManager @Inject constructor(
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             roleManager?.createRequestRoleIntent(RoleManager.ROLE_DIALER)
         } else {
+            @Suppress("DEPRECATION")
             Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER).apply {
                 putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, context.packageName)
             }

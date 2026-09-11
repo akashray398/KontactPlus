@@ -9,7 +9,7 @@ data class ActiveCallInfo(
     val displayName: String = "",
     val state: ActiveCallState = ActiveCallState.NoCall,
     val direction: CallDirection = CallDirection.Unknown,
-    val startTimeMillis: Long = 0,
+    val connectTimeMillis: Long = 0,
     val isMuted: Boolean = false,
     val currentEndpoint: CallAudioEndpoint = CallAudioEndpoint.Unknown,
     val availableEndpoints: List<CallAudioEndpoint> = emptyList(),

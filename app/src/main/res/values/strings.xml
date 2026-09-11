@@ -102,9 +102,9 @@
 
     <!-- Recents -->
     <string name="recents_title">Recents</string>
-    <string name="recents_default_role_title">Make Kontact++ your default phone app</string>
-    <string name="recents_default_role_description">To display call history and manage calls, Kontact++ must be selected as your default phone app.</string>
-    <string name="recents_default_role_privacy">Call history is processed locally and is not uploaded.</string>
+    <string name="recents_default_role_title">Handle calls with Kontact++</string>
+    <string name="recents_default_role_description">To display call history and manage your calls, Kontact++ needs to be your default Phone app. You can change this anytime in system settings.</string>
+    <string name="recents_default_role_privacy">Your call history remains on this device. AI features do not automatically access your calls.</string>
     <string name="recents_choose_app">Choose Kontact++</string>
     <string name="recents_role_unsupported_title">Telecom Unsupported</string>
     <string name="recents_role_unsupported_description">This device does not support Telecom features required for call history.</string>
@@ -199,8 +199,8 @@
     <string name="dialpad_suggestions">Suggestions</string>
     <string name="dialpad_no_telecom_title">Dialing Unsupported</string>
     <string name="dialpad_no_telecom_description">This device cannot place phone calls.</string>
-    <string name="dialpad_role_title">Default Phone App Required</string>
-    <string name="dialpad_role_description">To place calls directly from Kontact++, it must be set as your default phone app.</string>
+    <string name="dialpad_role_title">Set as default Phone app</string>
+    <string name="dialpad_role_description">To make and receive calls directly in Kontact++, please set it as your default Phone app. You can change this anytime in system settings.</string>
     <string name="dialpad_choose_default">Set as default</string>
     <string name="dialpad_permission_title">Calling Permission Needed</string>
     <string name="dialpad_permission_description">Kontact++ needs permission to place phone calls.</string>

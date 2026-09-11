@@ -1,6 +1,5 @@
 package com.akash.kontactplus.feature.telecom
 
-import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akash.kontactplus.core.telecom.ActiveCallState
@@ -35,7 +34,7 @@ class ActiveCallViewModel @Inject constructor(
                 _uiState.update { it.copy(callInfo = info) }
                 
                 if (info.state == ActiveCallState.Active) {
-                    startDurationTicker()
+                    startDurationTicker(info.connectTimeMillis)
                 } else if (info.state == ActiveCallState.Disconnected || info.state == ActiveCallState.NoCall) {
                     stopDurationTicker()
                 }
@@ -80,14 +79,14 @@ class ActiveCallViewModel @Inject constructor(
         callManager.stopDtmfTone()
     }
 
-    private fun startDurationTicker() {
+    private fun startDurationTicker(connectTimeMillis: Long) {
         if (durationJob != null) return
         
-        val baseTime = SystemClock.elapsedRealtime()
         durationJob = viewModelScope.launch {
             while (true) {
-                val elapsedSeconds = (SystemClock.elapsedRealtime() - baseTime) / 1000
-                _uiState.update { it.copy(durationText = formatDuration(elapsedSeconds)) }
+                val now = System.currentTimeMillis()
+                val elapsedSeconds = if (connectTimeMillis > 0) (now - connectTimeMillis) / 1000 else 0L
+                _uiState.update { it.copy(durationText = formatDuration(maxOf(0, elapsedSeconds))) }
                 delay(1000)
             }
         }

@@ -3,6 +3,7 @@ package com.akash.kontactplus.core.telecom
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.DisconnectCause
+import android.telecom.VideoProfile
 import com.akash.kontactplus.core.telecom.notification.CallNotificationManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,6 +12,10 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manages active Telecom calls and provides a unified state to the application.
+ * Supports multiple concurrent calls (e.g., active + held).
+ */
 @Singleton
 class CallManager @Inject constructor(
     private val notificationManager: CallNotificationManager
@@ -18,30 +23,51 @@ class CallManager @Inject constructor(
     private val _activeCallInfo = MutableStateFlow(ActiveCallInfo())
     val activeCallInfo: StateFlow<ActiveCallInfo> = _activeCallInfo.asStateFlow()
 
-    private var currentCall: Call? = null
+    // Internal list to track all active calls managed by Telecom
+    private val calls = mutableMapOf<String, Call>()
+    
+    // The "primary" call currently in focus for the UI
+    private var primaryCallId: String? = null
 
     private val callCallback = object : Call.Callback() {
         override fun onStateChanged(call: Call?, state: Int) {
-            updateCallInfo()
+            updateAllCallStates()
         }
 
         override fun onDetailsChanged(call: Call?, details: Call.Details?) {
-            updateCallInfo()
+            updateAllCallStates()
         }
     }
 
     fun onCallAdded(call: Call) {
-        currentCall = call
+        val callId = call.hashCode().toString()
+        calls[callId] = call
         call.registerCallback(callCallback)
-        updateCallInfo()
+        
+        // If this is the first call, or it's ringing, make it primary
+        if (primaryCallId == null || call.state == Call.STATE_RINGING) {
+            primaryCallId = callId
+        }
+        
+        updateAllCallStates()
     }
 
     fun onCallRemoved(call: Call) {
-        if (currentCall == call) {
-            call.unregisterCallback(callCallback)
-            currentCall = null
+        val callId = call.hashCode().toString()
+        call.unregisterCallback(callCallback)
+        calls.remove(callId)
+        
+        if (primaryCallId == callId) {
+            // Pick another call as primary if available, prioritize Active
+            primaryCallId = calls.values.find { it.state == Call.STATE_ACTIVE }?.hashCode()?.toString()
+                ?: calls.keys.firstOrNull()
+        }
+
+        if (calls.isEmpty()) {
             notificationManager.cancelNotification()
             _activeCallInfo.update { ActiveCallInfo() }
+        } else {
+            updateAllCallStates()
         }
     }
 
@@ -56,41 +82,59 @@ class CallManager @Inject constructor(
     }
 
     fun answer() {
-        currentCall?.answer(android.telecom.VideoProfile.STATE_AUDIO_ONLY)
+        getPrimaryCall()?.answer(VideoProfile.STATE_AUDIO_ONLY)
     }
 
     fun reject() {
-        currentCall?.reject(false, null)
+        getPrimaryCall()?.reject(false, null)
     }
 
     fun disconnect() {
-        currentCall?.disconnect()
+        getPrimaryCall()?.disconnect()
     }
 
     fun hold() {
-        currentCall?.hold()
+        getPrimaryCall()?.hold()
     }
 
     fun unhold() {
-        currentCall?.unhold()
+        getPrimaryCall()?.unhold()
     }
 
     fun playDtmfTone(digit: Char) {
-        currentCall?.playDtmfTone(digit)
+        getPrimaryCall()?.playDtmfTone(digit)
     }
 
     fun stopDtmfTone() {
-        currentCall?.stopDtmfTone()
+        getPrimaryCall()?.stopDtmfTone()
     }
 
-    private fun updateCallInfo() {
-        val call = currentCall ?: return
+    private fun getPrimaryCall(): Call? = primaryCallId?.let { calls[it] }
+
+    private fun updateAllCallStates() {
+        val call = getPrimaryCall()
+        if (call == null) {
+            if (calls.isEmpty()) {
+                _activeCallInfo.update { ActiveCallInfo() }
+            } else {
+                // If primary was null but list not empty, reset primary and try again
+                primaryCallId = calls.keys.firstOrNull()
+                updateAllCallStates()
+            }
+            return
+        }
+
         val details = call.details
-        
         val phoneNumber = details?.handle?.schemeSpecificPart ?: ""
         val displayName = details?.callerDisplayName ?: ""
         val state = mapTelecomState(call.state)
-        val direction = if (call.state == Call.STATE_RINGING) CallDirection.Incoming else CallDirection.Outgoing
+        val direction = if (call.state == Call.STATE_RINGING || call.state == Call.STATE_CONNECTING) {
+            // Note: Connecting might be outgoing too, but ringing is definitely incoming
+            if (call.state == Call.STATE_RINGING) CallDirection.Incoming else CallDirection.Outgoing
+        } else {
+            // Fallback to simple direction detection
+            if (call.state == Call.STATE_DIALING) CallDirection.Outgoing else CallDirection.Incoming
+        }
         
         val capabilities = details?.callCapabilities ?: 0
         val canHold = (capabilities and Call.Details.CAPABILITY_HOLD) != 0
@@ -106,6 +150,7 @@ class CallManager @Inject constructor(
             displayName = displayName,
             state = state,
             direction = direction,
+            connectTimeMillis = details?.connectTimeMillis ?: 0L,
             canHold = canHold,
             canUnhold = canUnhold,
             canMute = canMute,
@@ -131,7 +176,7 @@ class CallManager @Inject constructor(
                 notificationManager.showOngoingCallNotification(info)
             }
             ActiveCallState.Disconnected, ActiveCallState.Disconnecting, ActiveCallState.NoCall -> {
-                notificationManager.cancelNotification()
+                // Do not cancel immediately if it's a short transition, but usually InCallService handles removal
             }
         }
     }

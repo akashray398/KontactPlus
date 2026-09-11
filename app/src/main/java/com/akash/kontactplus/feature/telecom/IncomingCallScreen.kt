@@ -5,7 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CallEnd
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +29,9 @@ fun IncomingCallScreen(
     onDecline: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Prevent double taps
+    var actionTaken by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -70,12 +73,19 @@ fun IncomingCallScreen(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             IconButton(
-                onClick = onDecline,
+                onClick = { 
+                    if (!actionTaken) {
+                        actionTaken = true
+                        onDecline()
+                    }
+                },
                 modifier = Modifier
                     .size(72.dp)
                     .semantics { role = Role.Button },
+                enabled = !actionTaken,
                 colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.error
+                    containerColor = MaterialTheme.colorScheme.error,
+                    disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
                 )
             ) {
                 Icon(
@@ -87,12 +97,19 @@ fun IncomingCallScreen(
             }
 
             IconButton(
-                onClick = onAnswer,
+                onClick = {
+                    if (!actionTaken) {
+                        actionTaken = true
+                        onAnswer()
+                    }
+                },
                 modifier = Modifier
                     .size(72.dp)
                     .semantics { role = Role.Button },
+                enabled = !actionTaken,
                 colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = Color(0xFF22C55E) // SuccessGreen
+                    containerColor = Color(0xFF22C55E), // SuccessGreen
+                    disabledContainerColor = Color(0xFF22C55E).copy(alpha = 0.5f)
                 )
             ) {
                 Icon(

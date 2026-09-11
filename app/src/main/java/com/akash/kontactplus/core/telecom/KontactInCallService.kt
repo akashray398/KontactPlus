@@ -8,6 +8,7 @@ import javax.inject.Inject
 
 /**
  * Service that receives events for active calls.
+ * Must be registered in AndroidManifest with BIND_INCALL_SERVICE permission.
  */
 @AndroidEntryPoint
 class KontactInCallService : InCallService() {
@@ -18,10 +19,16 @@ class KontactInCallService : InCallService() {
     companion object {
         private var instance: KontactInCallService? = null
         
+        /**
+         * Sets the muted state for the active telecom session.
+         */
         fun setMuted(muted: Boolean) {
             instance?.setMuted(muted)
         }
         
+        /**
+         * Sets the audio route for the active telecom session.
+         */
         fun setAudioRoute(route: Int) {
             instance?.setAudioRoute(route)
         }
@@ -34,7 +41,9 @@ class KontactInCallService : InCallService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        instance = null
+        if (instance == this) {
+            instance = null
+        }
     }
 
     override fun onCallAdded(call: Call) {
