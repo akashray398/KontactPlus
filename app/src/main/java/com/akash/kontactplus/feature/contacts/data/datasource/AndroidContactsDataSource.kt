@@ -4,9 +4,12 @@ import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
 import android.provider.ContactsContract
+import com.akash.kontactplus.core.demo.DemoData
+import com.akash.kontactplus.core.demo.DemoModeManager
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -14,7 +17,8 @@ import javax.inject.Inject
  * Android-specific implementation of [ContactsDataSource] using [ContentResolver].
  */
 class AndroidContactsDataSource @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val demoModeManager: DemoModeManager
 ) : ContactsDataSource {
 
     private val projection = arrayOf(
@@ -26,6 +30,10 @@ class AndroidContactsDataSource @Inject constructor(
     )
 
     override suspend fun getContacts(): List<Contact> = withContext(Dispatchers.IO) {
+        if (demoModeManager.isDemoModeEnabled.first()) {
+            return@withContext DemoData.contacts
+        }
+        
         try {
             val resolver: ContentResolver = context.contentResolver
             val cursor = resolver.query(

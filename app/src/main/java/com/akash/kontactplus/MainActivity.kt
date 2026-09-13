@@ -14,6 +14,7 @@ import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
 import com.akash.kontactplus.core.telecom.DialIntentHandler
 import com.akash.kontactplus.core.telecom.DialerRoleState
 import com.akash.kontactplus.core.telecom.TelecomRoleManager
+import com.akash.kontactplus.feature.ai.domain.repository.AiRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -25,6 +26,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var dialIntentHandler: DialIntentHandler
+
+    @Inject
+    lateinit var aiRepository: AiRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,7 +42,8 @@ class MainActivity : ComponentActivity() {
             KontactPlusTheme {
                 KontactPlusApp(
                     telecomRoleManager = telecomRoleManager,
-                    dialIntentHandler = dialIntentHandler
+                    dialIntentHandler = dialIntentHandler,
+                    aiRepository = aiRepository
                 )
             }
         }

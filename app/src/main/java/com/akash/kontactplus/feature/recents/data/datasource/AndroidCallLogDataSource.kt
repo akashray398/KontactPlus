@@ -4,10 +4,13 @@ import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
 import android.provider.CallLog
+import com.akash.kontactplus.core.demo.DemoData
+import com.akash.kontactplus.core.demo.DemoModeManager
 import com.akash.kontactplus.feature.recents.domain.model.RecentCall
 import com.akash.kontactplus.feature.recents.domain.model.RecentCallType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -15,10 +18,15 @@ import javax.inject.Inject
  * Android-specific implementation of [CallLogDataSource] using [ContentResolver].
  */
 class AndroidCallLogDataSource @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val demoModeManager: DemoModeManager
 ) : CallLogDataSource {
 
     override suspend fun getRecentCalls(limit: Int): List<RecentCall> = withContext(Dispatchers.IO) {
+        if (demoModeManager.isDemoModeEnabled.first()) {
+            return@withContext DemoData.recentCalls
+        }
+        
         try {
             val resolver: ContentResolver = context.contentResolver
             val projection = arrayOf(

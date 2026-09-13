@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akash.kontactplus.R
+import com.akash.kontactplus.core.designsystem.component.SetupItem
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
 import com.akash.kontactplus.feature.contacts.domain.model.ContactSortOrder
 import com.akash.kontactplus.feature.contacts.domain.usecase.FilterContactsUseCase
@@ -29,6 +30,8 @@ class ContactsViewModel @Inject constructor(
     private val _allContacts = MutableStateFlow<List<Contact>>(emptyList())
     private val _searchQuery = savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
     private val _sortOrder = savedStateHandle.getStateFlow(KEY_SORT_ORDER, ContactSortOrder.NameAscending)
+    
+    private val _isSetupCardDismissed = savedStateHandle.getStateFlow(KEY_SETUP_CARD_DISMISSED, false)
 
     private var loadContactsJob: Job? = null
 
@@ -36,12 +39,47 @@ class ContactsViewModel @Inject constructor(
         combine(
             _allContacts,
             _searchQuery.debounce(200),
-            _sortOrder
-        ) { contacts, query, sortOrder ->
-            filterContactsUseCase(contacts, query, sortOrder)
-        }.onEach { filtered ->
-            _uiState.update { it.copy(visibleContacts = filtered, searchQuery = _searchQuery.value, sortOrder = _sortOrder.value) }
+            _sortOrder,
+            _isSetupCardDismissed
+        ) { contacts, query, sortOrder, dismissed ->
+            val filtered = filterContactsUseCase(contacts, query, sortOrder)
+            filtered to dismissed
+        }.onEach { (filtered, dismissed) ->
+            _uiState.update { 
+                it.copy(
+                    visibleContacts = filtered, 
+                    searchQuery = _searchQuery.value, 
+                    sortOrder = _sortOrder.value,
+                    showSetupCard = !dismissed && _uiState.value.setupItems.any { !it.isCompleted }
+                ) 
+            }
         }.launchIn(viewModelScope)
+    }
+
+    fun updateSetupItems(
+        isContactsGranted: Boolean,
+        isDialerHeld: Boolean,
+        isCallLogGranted: Boolean,
+        isNotificationsGranted: Boolean,
+        isAiDisclosureAccepted: Boolean
+    ) {
+        val items = listOf(
+            SetupItem("Contacts access", isContactsGranted) {},
+            SetupItem("Default Phone role", isDialerHeld) {},
+            SetupItem("Call history access", isCallLogGranted) {},
+            SetupItem("Notification permission", isNotificationsGranted) {},
+            SetupItem("Optional AI help (Opt-in)", isAiDisclosureAccepted) {}
+        )
+        _uiState.update { 
+            it.copy(
+                setupItems = items,
+                showSetupCard = !_isSetupCardDismissed.value && items.any { !it.isCompleted && it.title != "Optional AI help (Opt-in)" }
+            ) 
+        }
+    }
+
+    fun onDismissSetupCard() {
+        savedStateHandle[KEY_SETUP_CARD_DISMISSED] = true
     }
 
     fun onPermissionStatusChecked(isGranted: Boolean, shouldShowRationale: Boolean) {
@@ -87,7 +125,6 @@ class ContactsViewModel @Inject constructor(
 
     fun onSearchQueryChanged(query: String) {
         savedStateHandle[KEY_SEARCH_QUERY] = query
-        // UI state update is handled by the combine block
     }
 
     fun onClearSearch() {
@@ -154,5 +191,6 @@ class ContactsViewModel @Inject constructor(
         private const val KEY_HAS_REQUESTED_PERMISSION = "has_requested_permission"
         private const val KEY_SEARCH_QUERY = "search_query"
         private const val KEY_SORT_ORDER = "sort_order"
+        private const val KEY_SETUP_CARD_DISMISSED = "setup_card_dismissed"
     }
 }

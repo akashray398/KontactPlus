@@ -10,10 +10,7 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
@@ -23,16 +20,26 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.akash.kontactplus.core.telecom.TelecomRoleManager
+import com.akash.kontactplus.feature.ai.domain.repository.AiRepository
 
 @Composable
 fun ContactsRoute(
+    telecomRoleManager: TelecomRoleManager,
+    aiRepository: AiRepository,
     onContactClick: (String) -> Unit,
+    onNavigateToDialpad: () -> Unit,
+    onNavigateToRecents: () -> Unit,
+    onNavigateToAi: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ContactsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    
+    val aiDisclosureAccepted by aiRepository.hasAcceptedDisclosure().collectAsStateWithLifecycle(initialValue = false)
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -44,30 +51,35 @@ fun ContactsRoute(
         viewModel.onPermissionResultReceived(isGranted, shouldShowRationale)
     }
 
-    val checkPermission = {
-        val isGranted = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.READ_CONTACTS
-        ) == PackageManager.PERMISSION_GRANTED
-        
+    val checkAllStatus = {
+        val isContactsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        val isDialerHeld = telecomRoleManager.getDialerRoleState() == com.akash.kontactplus.core.telecom.DialerRoleState.Held
+        val isCallLogGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
+        val isNotificationsGranted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+
         val activity = context.findActivity()
         val shouldShowRationale = activity?.let {
             ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.READ_CONTACTS)
         } ?: false
         
-        viewModel.onPermissionStatusChecked(isGranted, shouldShowRationale)
+        viewModel.onPermissionStatusChecked(isContactsGranted, shouldShowRationale)
+        viewModel.updateSetupItems(
+            isContactsGranted = isContactsGranted,
+            isDialerHeld = isDialerHeld,
+            isCallLogGranted = isCallLogGranted,
+            isNotificationsGranted = isNotificationsGranted,
+            isAiDisclosureAccepted = aiDisclosureAccepted
+        )
     }
 
-    // Check permission on initial composition
     LaunchedEffect(Unit) {
-        checkPermission()
+        checkAllStatus()
     }
 
-    // Re-check permission when app returns to foreground
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                checkPermission()
+                checkAllStatus()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -92,6 +104,11 @@ fun ContactsRoute(
         onClearSearch = viewModel::onClearSearch,
         onSortOrderChanged = viewModel::onSortOrderChanged,
         onContactClick = onContactClick,
+        onDismissSetupCard = viewModel::onDismissSetupCard,
+        onNavigateToDialpad = onNavigateToDialpad,
+        onNavigateToRecents = onNavigateToRecents,
+        onNavigateToAi = onNavigateToAi,
+        onNavigateToSettings = onNavigateToSettings,
         modifier = modifier
     )
 }

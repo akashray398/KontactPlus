@@ -5,7 +5,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContactPage
-import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material3.*
@@ -39,6 +38,11 @@ fun ContactsScreen(
     onClearSearch: () -> Unit,
     onSortOrderChanged: (ContactSortOrder) -> Unit,
     onContactClick: (String) -> Unit,
+    onDismissSetupCard: () -> Unit,
+    onNavigateToDialpad: () -> Unit,
+    onNavigateToRecents: () -> Unit,
+    onNavigateToAi: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -108,7 +112,12 @@ fun ContactsScreen(
                     onSearchQueryChanged = onSearchQueryChanged,
                     onClearSearch = onClearSearch,
                     onSortOrderChanged = onSortOrderChanged,
-                    onContactClick = onContactClick
+                    onContactClick = onContactClick,
+                    onDismissSetupCard = onDismissSetupCard,
+                    onNavigateToDialpad = onNavigateToDialpad,
+                    onNavigateToRecents = onNavigateToRecents,
+                    onNavigateToAi = onNavigateToAi,
+                    onNavigateToSettings = onNavigateToSettings
                 )
             }
         }
@@ -122,7 +131,12 @@ private fun GrantedContent(
     onSearchQueryChanged: (String) -> Unit,
     onClearSearch: () -> Unit,
     onSortOrderChanged: (ContactSortOrder) -> Unit,
-    onContactClick: (String) -> Unit
+    onContactClick: (String) -> Unit,
+    onDismissSetupCard: () -> Unit,
+    onNavigateToDialpad: () -> Unit,
+    onNavigateToRecents: () -> Unit,
+    onNavigateToAi: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Spacer(modifier = Modifier.height(SpaceSmall))
@@ -132,6 +146,24 @@ private fun GrantedContent(
             modifier = Modifier.semantics { heading() }
         )
         
+        if (uiState.showSetupCard) {
+            Spacer(modifier = Modifier.height(SpaceMedium))
+            SetupProgressCard(
+                items = uiState.setupItems.map { item ->
+                    item.copy(onClick = {
+                        when (item.title) {
+                            "Contacts access" -> onRetryLoading()
+                            "Default Phone role" -> onNavigateToDialpad()
+                            "Call history access" -> onNavigateToRecents()
+                            "Notification permission" -> onNavigateToSettings()
+                            "Optional AI choice" -> onNavigateToAi()
+                        }
+                    })
+                },
+                onDismiss = onDismissSetupCard
+            )
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -309,7 +341,12 @@ private fun ContactsScreenPreview(
             onSearchQueryChanged = {},
             onClearSearch = {},
             onSortOrderChanged = {},
-            onContactClick = {}
+            onContactClick = {},
+            onDismissSetupCard = {},
+            onNavigateToDialpad = {},
+            onNavigateToRecents = {},
+            onNavigateToAi = {},
+            onNavigateToSettings = {}
         )
     }
 }

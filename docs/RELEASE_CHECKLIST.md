@@ -1,10 +1,12 @@
 # Kontact++ Release Checklist
 
 ## A. Mandatory Security Verification
-- [ ] **Zero Secrets**: Confirm no API keys in source code, `BuildConfig`, or `local.properties`.
-- [ ] **No BODY Logs**: Confirm `HttpLoggingInterceptor` is set to `BASIC` in release.
-- [ ] **HTTPS Only**: Confirm `AI_BASE_URL` in release build type starts with `https://`.
-- [ ] **Backup Safe**: Confirm `data_extraction_rules.xml` excludes the database.
+- [x] **Zero Secrets**: Confirm no API keys in source code, `BuildConfig`, or `local.properties`.
+- [x] **No BODY Logs**: Confirm `HttpLoggingInterceptor` is set to `BASIC` in release.
+- [x] **HTTPS Only**: Confirm `AI_BASE_URL` in release build type starts with `https://`.
+- [x] **Backup Safe**: Confirm `data_extraction_rules.xml` excludes the database.
+- [x] **Version Confirmed**: `versionCode = 1`, `versionName = "1.0.0-rc01"`.
+- [x] **Release-Candidate Artifacts**: `app-release.apk` and `app-release.aab` generated successfully.
 
 ## B. Production Infrastructure
 - [ ] **AI Backend**: Deploy the Kotlin/Ktor server to a production host.

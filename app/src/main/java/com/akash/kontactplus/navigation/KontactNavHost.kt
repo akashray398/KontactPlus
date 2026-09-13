@@ -19,11 +19,14 @@ import com.akash.kontactplus.feature.recents.presentation.RecentsRoute
 import com.akash.kontactplus.feature.relationship.presentation.ContactRelationshipRoute
 import com.akash.kontactplus.feature.settings.presentation.InsightsSettingsRoute
 import com.akash.kontactplus.feature.settings.presentation.PrivacySettingsRoute
+import com.akash.kontactplus.feature.settings.presentation.SettingsRoute
+import com.akash.kontactplus.feature.onboarding.presentation.OnboardingRoute
 
 @Composable
 fun KontactNavHost(
     navController: NavHostController,
     telecomRoleManager: TelecomRoleManager,
+    aiRepository: com.akash.kontactplus.feature.ai.domain.repository.AiRepository,
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -59,9 +62,27 @@ fun KontactNavHost(
         
         composable(route = KontactDestination.Contacts.route) {
             ContactsRoute(
+                telecomRoleManager = telecomRoleManager,
+                aiRepository = aiRepository,
                 onContactClick = { lookupKey ->
                     val encodedKey = Uri.encode(lookupKey)
                     navController.navigate("contact/$encodedKey")
+                },
+                onNavigateToDialpad = {
+                    navController.navigate(KontactDestination.Dialpad.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToRecents = {
+                    navController.navigate(KontactDestination.Recents.route) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToAi = {
+                    navController.navigate("ai_tools")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings/insights")
                 }
             )
         }
@@ -91,7 +112,7 @@ fun KontactNavHost(
                     navController.navigate("ai_tools")
                 },
                 onSettingsClick = {
-                    navController.navigate("settings/insights")
+                    navController.navigate("settings")
                 },
                 onDraftMessage = { action, instruction ->
                     val encodedInstruction = Uri.encode(instruction)
@@ -141,6 +162,16 @@ fun KontactNavHost(
             )
         }
 
+        composable(route = "settings") {
+            SettingsRoute(
+                onNavigateToInsights = { navController.navigate("settings/insights") },
+                onNavigateToPrivacy = { navController.navigate("settings/privacy") },
+                onNavigateToAiPrivacy = { /* AI Privacy dialog or screen */ },
+                 onOnboardingReplayed = { navController.navigate("onboarding") },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable(route = "settings/insights") {
             InsightsSettingsRoute(
                 onPrivacyCenterClick = {
@@ -153,6 +184,13 @@ fun KontactNavHost(
         composable(route = "settings/privacy") {
             PrivacySettingsRoute(
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = "onboarding") {
+            OnboardingRoute(
+                onFinish = { navController.popBackStack() },
+                onPrivacyClick = { /* Show privacy dialog */ }
             )
         }
     }

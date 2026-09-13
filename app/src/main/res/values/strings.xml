@@ -414,4 +414,36 @@
     <string name="ai_edit_request">Edit request</string>
     <string name="ai_contact_alias">Contact</string>
     <string name="ai_private_note_warning">Private note sharing is off by default.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Meet Kontact++</string>
+    <string name="onboarding_welcome_description">Your private phone, contacts and relationship assistant.</string>
+    <string name="onboarding_welcome_point1">Smart contacts management</string>
+    <string name="onboarding_welcome_point2">Modern phone functionality</string>
+    <string name="onboarding_welcome_point3">Personal relationship organisation</string>
+    <string name="onboarding_welcome_point4">Privacy-first design</string>
+    <string name="onboarding_get_started">Get started</string>
+
+    <string name="onboarding_privacy_title">Your relationships stay private</string>
+    <string name="onboarding_privacy_description">Contacts, call history, notes and connection insights are processed locally unless you explicitly use an online feature.</string>
+    <string name="onboarding_privacy_point1">Local contacts access</string>
+    <string name="onboarding_privacy_point2">Local relationship notes</string>
+    <string name="onboarding_privacy_point3">On-device smart insights</string>
+    <string name="onboarding_privacy_point4">No advertising or tracking SDKs</string>
+
+    <string name="onboarding_phone_title">Everything important in one place</string>
+    <string name="onboarding_phone_description">View and search device contacts, access recent calls locally, and use Kontact++ as your default Phone app to make and receive calls.</string>
+    <string name="onboarding_continue">Continue</string>
+
+    <string name="onboarding_ai_title">AI only when you choose</string>
+    <string name="onboarding_ai_description">AI assistance is optional. You preview selected information before sending. We never automatically upload your complete contact list or call history.</string>
+    <string name="onboarding_ai_privacy_link">Learn about AI privacy</string>
+
+    <string name="onboarding_ready_title">You’re ready to connect smarter</string>
+    <string name="onboarding_ready_description">Permissions are requested only when you open a feature that requires them.</string>
+    <string name="onboarding_open_app">Open Kontact++</string>
+    <string name="onboarding_review_privacy">Review privacy settings</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_finish">Finish</string>
 </resources>
