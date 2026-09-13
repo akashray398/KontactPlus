@@ -18,6 +18,7 @@ import com.akash.kontactplus.feature.favourites.presentation.FavouritesRoute
 import com.akash.kontactplus.feature.recents.presentation.RecentsRoute
 import com.akash.kontactplus.feature.relationship.presentation.ContactRelationshipRoute
 import com.akash.kontactplus.feature.settings.presentation.InsightsSettingsRoute
+import com.akash.kontactplus.feature.settings.presentation.PrivacySettingsRoute
 
 @Composable
 fun KontactNavHost(
@@ -142,6 +143,15 @@ fun KontactNavHost(
 
         composable(route = "settings/insights") {
             InsightsSettingsRoute(
+                onPrivacyCenterClick = {
+                    navController.navigate("settings/privacy")
+                },
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = "settings/privacy") {
+            PrivacySettingsRoute(
                 onBackClick = { navController.popBackStack() }
             )
         }

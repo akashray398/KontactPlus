@@ -33,9 +33,15 @@ android {
             buildConfigField("String", "AI_BASE_URL", "\"http://10.0.2.2:5000/\"")
         }
         release {
-            optimization {
-                enable = false
-            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("debug") // Default to debug for now
+            
+            buildConfigField("String", "AI_BASE_URL", "\"https://ai-proxy.kontactplus.com/\"")
         }
     }
     compileOptions {

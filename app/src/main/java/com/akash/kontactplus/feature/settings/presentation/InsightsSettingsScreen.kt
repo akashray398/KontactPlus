@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ fun InsightsSettingsScreen(
     onShowImportantDatesChange: (Boolean) -> Unit,
     onShowRemindersChange: (Boolean) -> Unit,
     onClearDismissedSuggestions: () -> Unit,
+    onPrivacyCenterClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
     Scaffold(
@@ -88,6 +90,26 @@ fun InsightsSettingsScreen(
                 
                 TextButton(onClick = onClearDismissedSuggestions) {
                     Text(stringResource(R.string.insights_clear_dismissed))
+                }
+
+                HorizontalDivider()
+
+                TextButton(
+                    onClick = onPrivacyCenterClick,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Text("Privacy Center")
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

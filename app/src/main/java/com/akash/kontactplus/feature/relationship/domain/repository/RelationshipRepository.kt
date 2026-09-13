@@ -30,6 +30,7 @@ interface RelationshipRepository {
     suspend fun saveSuggestionAction(action: ConnectionSuggestionAction): Result<Unit>
     suspend fun deleteSuggestionAction(key: String): Result<Unit>
     suspend fun clearAllSuggestionActions(): Result<Unit>
+    suspend fun deleteAllRelationshipData(): Result<Unit>
 }
 
 data class ConnectionSuggestionAction(

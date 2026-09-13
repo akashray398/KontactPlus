@@ -133,6 +133,10 @@ class RelationshipRepositoryImpl @Inject constructor(
         dao.clearAllSuggestionActions()
     }
 
+    override suspend fun deleteAllRelationshipData(): Result<Unit> = runCatching {
+        dao.deleteAllData()
+    }
+
     // Mappings
     private fun RelationshipTagEntity.toDomain() = RelationshipTag(id, name, colorKey)
     private fun ImportantDateEntity.toDomain() = ImportantDate(

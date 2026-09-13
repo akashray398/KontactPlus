@@ -8,6 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun InsightsSettingsRoute(
+    onPrivacyCenterClick: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: InsightsSettingsViewModel = hiltViewModel()
@@ -22,6 +23,7 @@ fun InsightsSettingsRoute(
         onShowImportantDatesChange = viewModel::setShowImportantDates,
         onShowRemindersChange = viewModel::setShowReminders,
         onClearDismissedSuggestions = viewModel::onClearDismissedSuggestions,
+        onPrivacyCenterClick = onPrivacyCenterClick,
         onBackClick = onBackClick
     )
 }

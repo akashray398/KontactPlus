@@ -13,6 +13,7 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -32,6 +33,15 @@ fun Application.module() {
             isLenient = true
             ignoreUnknownKeys = true
         })
+    }
+
+    // Basic CORS for development. Production should be restricted to known origins.
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Post)
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Authorization)
+        anyHost() // DEVELOPMENT ONLY - restrict for production
     }
 
     val dotenv = dotenv {
@@ -58,6 +68,8 @@ fun Application.module() {
         }
 
         post("/api/v1/ai/generate") {
+            val requestId = UUID.randomUUID().toString()
+            
             val request = try {
                 call.receive<AiRequestDto>()
             } catch (e: Exception) {
@@ -90,6 +102,7 @@ fun Application.module() {
                 
                 val aiResponse = httpClient.post("${baseUrl.trimEnd('/')}/chat/completions") {
                     header(HttpHeaders.Authorization, "Bearer $apiKey")
+                    header("X-Request-ID", requestId)
                     contentType(ContentType.Application.Json)
                     setBody(buildJsonObject {
                         put("model", model)
@@ -112,7 +125,7 @@ fun Application.module() {
                     val text = body["choices"]?.jsonArray?.get(0)?.jsonObject?.get("message")?.jsonObject?.get("content")?.jsonPrimitive?.content ?: ""
                     
                     call.respond(AiResponseDto(
-                        requestId = UUID.randomUUID().toString(),
+                        requestId = requestId,
                         text = text,
                         modelLabel = model
                     ))

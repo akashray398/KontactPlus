@@ -109,4 +109,33 @@ interface RelationshipDao {
 
     @Query("DELETE FROM connection_suggestion_actions")
     suspend fun clearAllSuggestionActions()
+
+    @Transaction
+    suspend fun deleteAllData() {
+        deleteAllRelationships()
+        deleteAllTags()
+        deleteAllTagRefs()
+        deleteAllImportantDates()
+        deleteAllReminders()
+        deleteAllFollowUpPreferences()
+        clearAllSuggestionActions()
+    }
+
+    @Query("DELETE FROM contact_relationships")
+    suspend fun deleteAllRelationships()
+
+    @Query("DELETE FROM relationship_tags")
+    suspend fun deleteAllTags()
+
+    @Query("DELETE FROM contact_tag_cross_ref")
+    suspend fun deleteAllTagRefs()
+
+    @Query("DELETE FROM important_dates")
+    suspend fun deleteAllImportantDates()
+
+    @Query("DELETE FROM relationship_reminders")
+    suspend fun deleteAllReminders()
+
+    @Query("DELETE FROM contact_follow_up_preferences")
+    suspend fun deleteAllFollowUpPreferences()
 }
