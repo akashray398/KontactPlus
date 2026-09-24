@@ -4,9 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.akash.kontactplus.R
+import com.akash.kontactplus.feature.ai.domain.usecase.AnalyzeConversationUseCase
 import com.akash.kontactplus.feature.contacts.domain.usecase.GetContactUseCase
 import com.akash.kontactplus.feature.favourites.domain.usecase.IsContactFavouriteUseCase
 import com.akash.kontactplus.feature.favourites.domain.usecase.ToggleFavouriteContactUseCase
+import com.akash.kontactplus.feature.relationship.domain.model.ContactFact
+import com.akash.kontactplus.feature.relationship.domain.model.FactCategory
+import com.akash.kontactplus.feature.relationship.domain.repository.RelationshipRepository
+import com.akash.kontactplus.feature.relationship.domain.usecase.GetMemoryReplayUseCase
+import com.akash.kontactplus.feature.relationship.domain.usecase.GetRelationshipTimelineUseCase
 import com.akash.kontactplus.feature.relationship.domain.usecase.ObserveContactRelationshipUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +29,11 @@ class ContactDetailsViewModel @Inject constructor(
     private val getContactUseCase: GetContactUseCase,
     private val isContactFavouriteUseCase: IsContactFavouriteUseCase,
     private val toggleFavouriteContactUseCase: ToggleFavouriteContactUseCase,
-    private val observeContactRelationshipUseCase: ObserveContactRelationshipUseCase
+    private val observeContactRelationshipUseCase: ObserveContactRelationshipUseCase,
+    private val getMemoryReplayUseCase: GetMemoryReplayUseCase,
+    private val getRelationshipTimelineUseCase: GetRelationshipTimelineUseCase,
+    private val analyzeConversationUseCase: AnalyzeConversationUseCase,
+    private val relationshipRepository: RelationshipRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ContactDetailsUiState>(ContactDetailsUiState.Loading)
@@ -71,6 +81,54 @@ class ContactDetailsViewModel @Inject constructor(
         }
     }
 
+    fun onAddFact(factText: String, category: FactCategory) {
+        val key = lookupKey ?: return
+        if (factText.isBlank()) return
+        viewModelScope.launch {
+            relationshipRepository.saveFact(
+                ContactFact(
+                    lookupKey = key,
+                    fact = factText.trim(),
+                    category = category
+                )
+            )
+        }
+    }
+
+    fun onDeleteFact(factId: Long) {
+        viewModelScope.launch {
+            relationshipRepository.deleteFact(factId)
+        }
+    }
+
+    fun onAnalyzeConversation(notes: String) {
+        val currentState = _uiState.value as? ContactDetailsUiState.Success ?: return
+        val key = lookupKey ?: return
+
+        viewModelScope.launch {
+            _uiState.update { (it as? ContactDetailsUiState.Success)?.copy(isAnalyzingConversation = true) ?: it }
+            analyzeConversationUseCase(
+                lookupKey = key,
+                contactName = currentState.contact.displayName,
+                rawNotes = notes
+            ).fold(
+                onSuccess = { result ->
+                    _uiState.update { 
+                        (it as? ContactDetailsUiState.Success)?.copy(
+                            isAnalyzingConversation = false,
+                            analysisResult = result
+                        ) ?: it
+                    }
+                },
+                onFailure = {
+                    _uiState.update { 
+                        (it as? ContactDetailsUiState.Success)?.copy(isAnalyzingConversation = false) ?: it
+                    }
+                }
+            )
+        }
+    }
+
     private fun loadContact() {
         val key = lookupKey
         if (key.isNullOrBlank()) {
@@ -82,16 +140,46 @@ class ContactDetailsViewModel @Inject constructor(
             _uiState.value = ContactDetailsUiState.Loading
             getContactUseCase(key).fold(
                 onSuccess = { contact ->
-                    _uiState.value = if (contact != null) {
-                        ContactDetailsUiState.Success(contact = contact)
+                    if (contact != null) {
+                        _uiState.value = ContactDetailsUiState.Success(contact = contact)
+                        observeMemoryReplay(key, contact.displayName)
+                        observeTimeline(key, contact.phoneNumbers)
                     } else {
-                        ContactDetailsUiState.NotFound
+                        _uiState.value = ContactDetailsUiState.NotFound
                     }
                 },
                 onFailure = {
                     _uiState.value = ContactDetailsUiState.Error(R.string.contact_details_error_description)
                 }
             )
+        }
+    }
+
+    private fun observeMemoryReplay(key: String, contactName: String) {
+        viewModelScope.launch {
+            getMemoryReplayUseCase(key, contactName).collectLatest { briefing ->
+                _uiState.update { state ->
+                    if (state is ContactDetailsUiState.Success) {
+                        state.copy(
+                            memoryReplay = briefing,
+                            health = briefing.health,
+                            facts = briefing.keyFacts
+                        )
+                    } else state
+                }
+            }
+        }
+    }
+
+    private fun observeTimeline(key: String, phoneNumbers: List<String>) {
+        viewModelScope.launch {
+            getRelationshipTimelineUseCase(key, phoneNumbers).collectLatest { timelineItems ->
+                _uiState.update { state ->
+                    if (state is ContactDetailsUiState.Success) {
+                        state.copy(timeline = timelineItems)
+                    } else state
+                }
+            }
         }
     }
 

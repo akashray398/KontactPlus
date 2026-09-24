@@ -137,6 +137,40 @@ class RelationshipRepositoryImpl @Inject constructor(
         dao.deleteAllData()
     }
 
+    override fun observeFactsForContact(lookupKey: String): Flow<List<ContactFact>> {
+        return dao.observeFactsForContact(lookupKey).map { list -> list.map { it.toDomain() } }
+    }
+
+    override fun observeAllFacts(): Flow<List<ContactFact>> {
+        return dao.observeAllFacts().map { list -> list.map { it.toDomain() } }
+    }
+
+    override suspend fun saveFact(fact: ContactFact): Result<Long> = runCatching {
+        dao.insertFact(fact.toEntity())
+    }
+
+    override suspend fun deleteFact(factId: Long): Result<Unit> = runCatching {
+        dao.deleteFact(factId)
+    }
+
+    // Mappings
+    private fun ContactFactEntity.toDomain() = ContactFact(
+        id = id,
+        lookupKey = lookupKey,
+        fact = fact,
+        category = try { FactCategory.valueOf(category) } catch (e: Exception) { FactCategory.Personal },
+        createdAtEpochMillis = createdAtEpochMillis
+    )
+
+    private fun ContactFact.toEntity() = ContactFactEntity(
+        id = id,
+        lookupKey = lookupKey,
+        fact = fact,
+        category = category.name,
+        createdAtEpochMillis = createdAtEpochMillis
+    )
+
+
     // Mappings
     private fun RelationshipTagEntity.toDomain() = RelationshipTag(id, name, colorKey)
     private fun ImportantDateEntity.toDomain() = ImportantDate(

@@ -164,6 +164,35 @@ private fun GrantedContent(
             )
         }
 
+        if (uiState.duplicatePairs.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(SpaceSmall))
+            KontactCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(SpaceMedium)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.ContactPage,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(SpaceSmall))
+                        Text(
+                            text = "Contact Fusion (${uiState.duplicatePairs.size} duplicates detected)",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(SpaceSmall))
+                    val pair = uiState.duplicatePairs.first()
+                    Text(
+                        text = "Potential duplicate: '${pair.primaryContact.displayName}' & '${pair.duplicateContact.displayName}' (${pair.matchReason})",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically

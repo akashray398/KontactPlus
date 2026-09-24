@@ -7,8 +7,10 @@ import com.akash.kontactplus.R
 import com.akash.kontactplus.core.designsystem.component.SetupItem
 import com.akash.kontactplus.feature.contacts.domain.model.Contact
 import com.akash.kontactplus.feature.contacts.domain.model.ContactSortOrder
+import com.akash.kontactplus.feature.contacts.domain.usecase.ContactFusionEngine
 import com.akash.kontactplus.feature.contacts.domain.usecase.FilterContactsUseCase
 import com.akash.kontactplus.feature.contacts.domain.usecase.GetContactsUseCase
+import com.akash.kontactplus.feature.contacts.domain.usecase.SmartContactFilterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -21,7 +23,9 @@ import javax.inject.Inject
 class ContactsViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val getContactsUseCase: GetContactsUseCase,
-    private val filterContactsUseCase: FilterContactsUseCase
+    private val filterContactsUseCase: FilterContactsUseCase,
+    private val smartContactFilterUseCase: SmartContactFilterUseCase,
+    private val contactFusionEngine: ContactFusionEngine
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ContactsUiState())
@@ -42,12 +46,15 @@ class ContactsViewModel @Inject constructor(
             _sortOrder,
             _isSetupCardDismissed
         ) { contacts, query, sortOrder, dismissed ->
-            val filtered = filterContactsUseCase(contacts, query, sortOrder)
-            filtered to dismissed
-        }.onEach { (filtered, dismissed) ->
+            val smartFiltered = smartContactFilterUseCase.filterContacts(contacts, query)
+            val sortedFiltered = filterContactsUseCase(smartFiltered, "", sortOrder)
+            val duplicates = if (query.isBlank()) contactFusionEngine.detectDuplicates(contacts) else emptyList()
+            Triple(sortedFiltered, duplicates, dismissed)
+        }.onEach { (filtered, duplicates, dismissed) ->
             _uiState.update { 
                 it.copy(
-                    visibleContacts = filtered, 
+                    visibleContacts = filtered,
+                    duplicatePairs = duplicates,
                     searchQuery = _searchQuery.value, 
                     sortOrder = _sortOrder.value,
                     showSetupCard = !dismissed && _uiState.value.setupItems.any { !it.isCompleted }

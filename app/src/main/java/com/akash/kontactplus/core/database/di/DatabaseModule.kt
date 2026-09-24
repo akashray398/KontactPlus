@@ -31,7 +31,8 @@ object DatabaseModule {
         )
         .addMigrations(
             KontactPlusDatabase.MIGRATION_1_2,
-            KontactPlusDatabase.MIGRATION_2_3
+            KontactPlusDatabase.MIGRATION_2_3,
+            KontactPlusDatabase.MIGRATION_3_4
         )
         .build()
     }

@@ -20,9 +20,10 @@ import com.akash.kontactplus.feature.relationship.data.local.*
         ImportantDateEntity::class,
         RelationshipReminderEntity::class,
         ContactFollowUpPreferenceEntity::class,
-        ConnectionSuggestionActionEntity::class
+        ConnectionSuggestionActionEntity::class,
+        ContactFactEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class KontactPlusDatabase : RoomDatabase() {
@@ -132,5 +133,22 @@ abstract class KontactPlusDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_connection_suggestion_actions_lookupKey` ON `connection_suggestion_actions` (`lookupKey`)")
             }
         }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `contact_facts` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `lookupKey` TEXT NOT NULL,
+                        `fact` TEXT NOT NULL,
+                        `category` TEXT NOT NULL,
+                        `sourceNoteId` TEXT,
+                        `createdAtEpochMillis` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_contact_facts_lookupKey` ON `contact_facts` (`lookupKey`)")
+            }
+        }
     }
 }
+

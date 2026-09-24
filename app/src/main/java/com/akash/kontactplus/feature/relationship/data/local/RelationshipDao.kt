@@ -138,4 +138,20 @@ interface RelationshipDao {
 
     @Query("DELETE FROM contact_follow_up_preferences")
     suspend fun deleteAllFollowUpPreferences()
+
+    // Facts / AI Relationship Memory
+    @Query("SELECT * FROM contact_facts WHERE lookupKey = :lookupKey ORDER BY createdAtEpochMillis DESC")
+    fun observeFactsForContact(lookupKey: String): Flow<List<ContactFactEntity>>
+
+    @Query("SELECT * FROM contact_facts ORDER BY createdAtEpochMillis DESC")
+    fun observeAllFacts(): Flow<List<ContactFactEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFact(fact: ContactFactEntity): Long
+
+    @Query("DELETE FROM contact_facts WHERE id = :factId")
+    suspend fun deleteFact(factId: Long)
+
+    @Query("DELETE FROM contact_facts WHERE lookupKey = :lookupKey")
+    suspend fun deleteAllFactsForContact(lookupKey: String)
 }

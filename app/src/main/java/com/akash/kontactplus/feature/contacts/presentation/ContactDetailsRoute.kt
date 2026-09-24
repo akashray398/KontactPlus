@@ -34,6 +34,15 @@ fun ContactDetailsRoute(
                 onManageRelationship((uiState as ContactDetailsUiState.Success).contact.lookupKey)
             }
         },
+        onAddFact = { factText, category ->
+            viewModel.onAddFact(factText, category)
+        },
+        onDeleteFact = { factId ->
+            viewModel.onDeleteFact(factId)
+        },
+        onAnalyzeConversation = { notes ->
+            viewModel.onAnalyzeConversation(notes)
+        },
         onRetry = {
             viewModel.retry()
         },

@@ -31,6 +31,12 @@ interface RelationshipRepository {
     suspend fun deleteSuggestionAction(key: String): Result<Unit>
     suspend fun clearAllSuggestionActions(): Result<Unit>
     suspend fun deleteAllRelationshipData(): Result<Unit>
+
+    // Relationship Facts & Memory
+    fun observeFactsForContact(lookupKey: String): Flow<List<ContactFact>>
+    fun observeAllFacts(): Flow<List<ContactFact>>
+    suspend fun saveFact(fact: ContactFact): Result<Long>
+    suspend fun deleteFact(factId: Long): Result<Unit>
 }
 
 data class ConnectionSuggestionAction(
