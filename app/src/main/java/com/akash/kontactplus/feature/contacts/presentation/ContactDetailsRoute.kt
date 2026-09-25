@@ -2,7 +2,7 @@ package com.akash.kontactplus.feature.contacts.presentation
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import android.provider.ContactsContract
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -14,6 +14,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun ContactDetailsRoute(
     onBackClick: () -> Unit,
     onManageRelationship: (String) -> Unit,
+    onNavigateToDialpad: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ContactDetailsViewModel = hiltViewModel()
 ) {
@@ -24,10 +25,20 @@ fun ContactDetailsRoute(
         uiState = uiState,
         onBackClick = onBackClick,
         onPhoneNumberClick = { phoneNumber ->
-            context.dialNumber(phoneNumber)
+            onNavigateToDialpad(phoneNumber)
         },
         onFavouriteClick = {
             viewModel.onFavouriteClick()
+        },
+        onEditContactClick = {
+            val intent = Intent(Intent.ACTION_INSERT_OR_EDIT).apply {
+                type = ContactsContract.Contacts.CONTENT_ITEM_TYPE
+            }
+            try {
+                context.startActivity(intent)
+            } catch (_: Exception) {
+                // Safe fallback if no contacts editor available
+            }
         },
         onManageRelationship = {
             if (uiState is ContactDetailsUiState.Success) {
@@ -48,16 +59,4 @@ fun ContactDetailsRoute(
         },
         modifier = modifier
     )
-}
-
-private fun Context.dialNumber(phoneNumber: String) {
-    if (phoneNumber.isBlank()) return
-    val intent = Intent(Intent.ACTION_DIAL).apply {
-        data = Uri.parse("tel:${Uri.encode(phoneNumber)}")
-    }
-    try {
-        startActivity(intent)
-    } catch (e: Exception) {
-        // Fallback or log if dialer not found
-    }
 }

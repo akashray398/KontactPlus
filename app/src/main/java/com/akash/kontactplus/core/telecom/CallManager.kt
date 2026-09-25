@@ -1,10 +1,14 @@
 package com.akash.kontactplus.core.telecom
 
+import android.content.Context
+import android.content.Intent
 import android.telecom.Call
 import android.telecom.CallAudioState
 import android.telecom.DisconnectCause
 import android.telecom.VideoProfile
 import com.akash.kontactplus.core.telecom.notification.CallNotificationManager
+import com.akash.kontactplus.feature.telecom.ActiveCallActivity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +22,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class CallManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val notificationManager: CallNotificationManager
 ) {
     private val _activeCallInfo = MutableStateFlow(ActiveCallInfo())
@@ -50,6 +55,7 @@ class CallManager @Inject constructor(
         }
         
         updateAllCallStates()
+        launchActiveCallUi()
     }
 
     fun onCallRemoved(call: Call) {
@@ -107,6 +113,16 @@ class CallManager @Inject constructor(
 
     fun stopDtmfTone() {
         getPrimaryCall()?.stopDtmfTone()
+    }
+
+    private fun launchActiveCallUi() {
+        try {
+            val intent = Intent(context, ActiveCallActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
+        }
     }
 
     private fun getPrimaryCall(): Call? = primaryCallId?.let { calls[it] }

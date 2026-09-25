@@ -132,6 +132,10 @@ fun KontactNavHost(
                 onManageRelationship = { lookupKey ->
                     val encodedKey = Uri.encode(lookupKey)
                     navController.navigate("contact/$encodedKey/relationship")
+                },
+                onNavigateToDialpad = { number ->
+                    val encodedNumber = Uri.encode(number)
+                    navController.navigate("dialpad?number=$encodedNumber")
                 }
             )
         }

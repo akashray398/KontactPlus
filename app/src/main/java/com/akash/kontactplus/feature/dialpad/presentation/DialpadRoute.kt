@@ -3,11 +3,13 @@ package com.akash.kontactplus.feature.dialpad.presentation
 import android.Manifest
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.ContactsContract
 import android.telecom.TelecomManager
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -35,10 +37,48 @@ fun DialpadRoute(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    val roleLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        val isRoleHeld = telecomRoleManager.getDialerRoleState() == DialerRoleState.Held
+        val isPermissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CALL_PHONE
+        ) == PackageManager.PERMISSION_GRANTED
+        
+        val activity = context.findActivity()
+        val shouldShowRationale = activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CALL_PHONE)
+        } ?: false
+        
+        viewModel.onAccessStatusChanged(
+            isRoleHeld = isRoleHeld,
+            isPermissionGranted = isPermissionGranted,
+            shouldShowRationale = shouldShowRationale,
+            isTelecomSupported = telecomRoleManager.isTelecomSupported()
+        )
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { _ ->
-        // Re-check status will happen via lifecycle
+        val isRoleHeld = telecomRoleManager.getDialerRoleState() == DialerRoleState.Held
+        val isPermissionGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CALL_PHONE
+        ) == PackageManager.PERMISSION_GRANTED
+        
+        val activity = context.findActivity()
+        val shouldShowRationale = activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CALL_PHONE)
+        } ?: false
+        
+        viewModel.onAccessStatusChanged(
+            isRoleHeld = isRoleHeld,
+            isPermissionGranted = isPermissionGranted,
+            shouldShowRationale = shouldShowRationale,
+            isTelecomSupported = telecomRoleManager.isTelecomSupported()
+        )
     }
 
     val checkStatus = {
@@ -48,7 +88,7 @@ fun DialpadRoute(
             Manifest.permission.CALL_PHONE
         ) == PackageManager.PERMISSION_GRANTED
         
-        val activity = context as? androidx.activity.ComponentActivity
+        val activity = context.findActivity()
         val shouldShowRationale = activity?.let {
             ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CALL_PHONE)
         } ?: false
@@ -74,21 +114,27 @@ fun DialpadRoute(
         onDelete = viewModel::onDelete,
         onClear = viewModel::onClear,
         onPaste = {
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val text = clipboard.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+            val text = clipboard?.primaryClip?.getItemAt(0)?.text?.toString() ?: ""
             viewModel.onPastedText(text)
         },
         onSuggestionClick = { number ->
             viewModel.onExternalNumberReceived(number)
         },
         onCallClick = {
-            if (uiState.accessState == DialpadAccessState.Ready) {
-                context.placeCall(uiState.dialableNumber)
+            if (uiState.accessState == DialpadAccessState.Ready && uiState.dialableNumber.isNotBlank() && !uiState.isPlacingCall) {
+                viewModel.onCallStarted()
+                val success = context.placeCall(uiState.dialableNumber)
+                if (!success) {
+                    viewModel.onCallFailed(com.akash.kontactplus.R.string.dialpad_call_failed)
+                }
             }
         },
         onRequestRole = {
             val intent = telecomRoleManager.createRoleRequestIntent()
-            intent?.let { context.startActivity(it) }
+            if (intent != null) {
+                roleLauncher.launch(intent)
+            }
         },
         onRequestCallPermission = {
             viewModel.onPermissionRequestStarted()
@@ -111,13 +157,25 @@ fun DialpadRoute(
     )
 }
 
-private fun Context.placeCall(number: String) {
-    if (number.isBlank()) return
-    val telecomManager = getSystemService(TelecomManager::class.java)
+private fun Context.findActivity(): ComponentActivity? {
+    var currentContext = this
+    while (currentContext is ContextWrapper) {
+        if (currentContext is ComponentActivity) return currentContext
+        currentContext = currentContext.baseContext
+    }
+    return null
+}
+
+private fun Context.placeCall(number: String): Boolean {
+    if (number.isBlank()) return false
+    val telecomManager = getSystemService(TelecomManager::class.java) ?: return false
     val uri = Uri.fromParts("tel", number, null)
-    try {
-        telecomManager?.placeCall(uri, null)
+    return try {
+        telecomManager.placeCall(uri, null)
+        true
     } catch (e: SecurityException) {
-        // Handled by role/permission gating
+        false
+    } catch (e: Exception) {
+        false
     }
 }

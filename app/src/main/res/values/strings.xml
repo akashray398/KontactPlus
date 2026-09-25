@@ -446,4 +446,37 @@
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_back">Back</string>
     <string name="onboarding_finish">Finish</string>
+
+    <!-- Settings Additional Strings -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+
+    <string name="settings_phone_permissions">Phone &amp; Permissions</string>
+    <string name="settings_default_phone_role">Default Phone role</string>
+    <string name="settings_contacts_permission">Contacts permission</string>
+    <string name="settings_call_log_permission">Call history permission</string>
+    <string name="settings_calling_permission">Calling permission</string>
+    <string name="settings_notification_permission">Notification permission</string>
+    <string name="settings_status_held">Held (Active default)</string>
+    <string name="settings_status_not_held">Not default</string>
+    <string name="settings_status_granted">Granted</string>
+    <string name="settings_status_denied">Denied</string>
+
+    <string name="settings_privacy_group">Privacy</string>
+    <string name="settings_clear_relationship_data">Clear local relationship data</string>
+    <string name="settings_clear_relationship_confirm">Are you sure you want to delete all local notes, tags, facts, and reminders? Device contacts will not be deleted.</string>
+
+    <string name="settings_support_group">Contact &amp; Support</string>
+    <string name="settings_contact_developer">Contact developer</string>
+    <string name="settings_report_problem">Report a problem</string>
+    <string name="settings_send_feedback">Send feedback</string>
+    <string name="settings_github_repo">GitHub repository</string>
+    <string name="settings_share_app">Share app</string>
+
+    <string name="support_email">support@kontactplus.com</string>
+    <string name="github_url">https://github.com/akashray398/KontactPlus</string>
+    <string name="privacy_policy_url">https://github.com/akashray398/KontactPlus/blob/main/PRIVACY.md</string>
 </resources>

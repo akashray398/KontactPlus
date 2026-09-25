@@ -1,6 +1,11 @@
 package com.akash.kontactplus.feature.contacts.presentation
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -15,14 +20,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.akash.kontactplus.R
 import com.akash.kontactplus.core.designsystem.component.*
 import com.akash.kontactplus.core.designsystem.theme.*
@@ -31,13 +43,13 @@ import com.akash.kontactplus.feature.relationship.domain.model.*
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactDetailsScreen(
     uiState: ContactDetailsUiState,
     onBackClick: () -> Unit,
     onPhoneNumberClick: (String) -> Unit,
     onFavouriteClick: () -> Unit,
+    onEditContactClick: () -> Unit,
     onManageRelationship: () -> Unit,
     onAddFact: (String, FactCategory) -> Unit = { _, _ -> },
     onDeleteFact: (Long) -> Unit = {},
@@ -46,41 +58,7 @@ fun ContactDetailsScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        text = stringResource(R.string.contact_details_title),
-                        modifier = Modifier.semantics { heading() }
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.contact_details_back)
-                        )
-                    }
-                },
-                actions = {
-                    if (uiState is ContactDetailsUiState.Success) {
-                        IconButton(
-                            onClick = onFavouriteClick,
-                            enabled = !uiState.isFavouriteActionInProgress
-                        ) {
-                            Icon(
-                                imageVector = if (uiState.isFavourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
-                                contentDescription = stringResource(
-                                    if (uiState.isFavourite) R.string.favourite_remove else R.string.favourite_add
-                                ),
-                                tint = if (uiState.isFavourite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-            )
-        },
-        modifier = modifier
+        modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             when (uiState) {
@@ -90,6 +68,9 @@ fun ContactDetailsScreen(
                 is ContactDetailsUiState.Success -> {
                     SuccessState(
                         uiState = uiState,
+                        onBackClick = onBackClick,
+                        onFavouriteClick = onFavouriteClick,
+                        onEditContactClick = onEditContactClick,
                         onPhoneNumberClick = onPhoneNumberClick,
                         onManageRelationship = onManageRelationship,
                         onAddFact = onAddFact,
@@ -124,6 +105,9 @@ fun ContactDetailsScreen(
 @Composable
 private fun SuccessState(
     uiState: ContactDetailsUiState.Success,
+    onBackClick: () -> Unit,
+    onFavouriteClick: () -> Unit,
+    onEditContactClick: () -> Unit,
     onPhoneNumberClick: (String) -> Unit,
     onManageRelationship: () -> Unit,
     onAddFact: (String, FactCategory) -> Unit,
@@ -131,140 +115,298 @@ private fun SuccessState(
     onAnalyzeConversation: (String) -> Unit
 ) {
     val contact = uiState.contact
+    val context = LocalContext.current
     var showAddFactDialog by remember { mutableStateOf(false) }
     var noteInputForAnalysis by remember { mutableStateOf("") }
+
+    val gradientHeaderBrush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFF0F172A), // Dark navy
+            Color(0xFF1E1B4B), // Deep violet
+            Color(0xFF0284C7)  // Vibrant cyan
+        )
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(SpaceMedium),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ContactAvatar(
-            displayName = contact.displayName.ifBlank { stringResource(R.string.contacts_unnamed) },
-            size = ContactAvatarLarge
-        )
-        
-        Spacer(modifier = Modifier.height(SpaceMedium))
-        
-        Text(
-            text = contact.displayName.ifBlank { stringResource(R.string.contacts_unnamed) },
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(SpaceMedium))
-
-        // 1. Relationship Health Card
-        uiState.health?.let { health ->
-            RelationshipHealthCard(health = health)
-            Spacer(modifier = Modifier.height(SpaceMedium))
-        }
-
-        // 2. Memory Replay / Why Do I Know Card
-        uiState.memoryReplay?.let { replay ->
-            MemoryReplayCard(replay = replay)
-            Spacer(modifier = Modifier.height(SpaceMedium))
-        }
-
-        // 3. AI Relationship Memory / Facts Section
-        AiFactsSection(
-            facts = uiState.facts,
-            onAddFactClick = { showAddFactDialog = true },
-            onDeleteFact = onDeleteFact
-        )
-
-        Spacer(modifier = Modifier.height(SpaceMedium))
-
-        // 4. Conversation Intelligence Analyzer
-        ConversationAnalyzerCard(
-            noteText = noteInputForAnalysis,
-            onNoteTextChange = { noteInputForAnalysis = it },
-            isAnalyzing = uiState.isAnalyzingConversation,
-            onAnalyze = { 
-                if (noteInputForAnalysis.isNotBlank()) {
-                    onAnalyzeConversation(noteInputForAnalysis)
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(SpaceMedium))
-
-        // 5. Relationship Summary
-        KontactCard(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onManageRelationship
+        // Gradient Header Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(gradientHeaderBrush)
+                .statusBarsPadding()
+                .padding(bottom = SpaceLarge)
         ) {
-            Column(modifier = Modifier.padding(SpaceMedium)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = SpaceMedium, vertical = SpaceSmall),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Top Action Bar
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = stringResource(R.string.relationship_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Icon(
-                        imageVector = Icons.Default.Edit, 
-                        contentDescription = "Edit relationship details", 
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                
-                if (uiState.relationship?.privateNote?.isNotBlank() == true) {
-                    Spacer(modifier = Modifier.height(SpaceSmall))
-                    Text(
-                        text = uiState.relationship.privateNote,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 3
-                    )
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.contact_details_back),
+                            tint = Color.White
+                        )
+                    }
+
+                    IconButton(
+                        onClick = onFavouriteClick,
+                        enabled = !uiState.isFavouriteActionInProgress,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (uiState.isFavourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                            contentDescription = stringResource(
+                                if (uiState.isFavourite) R.string.favourite_remove else R.string.favourite_add
+                            ),
+                            tint = if (uiState.isFavourite) Color(0xFFFBBF24) else Color.White
+                        )
+                    }
                 }
 
-                if (uiState.relationship?.tags?.isNotEmpty() == true) {
-                    Spacer(modifier = Modifier.height(SpaceSmall))
-                    Text(
-                        text = uiState.relationship.tags.joinToString { it.name },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(SpaceMedium))
-
-        // 6. Unified Timeline
-        if (uiState.timeline.isNotEmpty()) {
-            RelationshipTimelineSection(timeline = uiState.timeline)
-            Spacer(modifier = Modifier.height(SpaceMedium))
-        }
-        
-        Text(
-            text = stringResource(R.string.contact_details_phone_numbers),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.fillMaxWidth().semantics { heading() },
-            fontWeight = FontWeight.Bold
-        )
-        
-        Spacer(modifier = Modifier.height(SpaceSmall))
-        
-        if (contact.phoneNumbers.isEmpty()) {
-            Text(
-                text = stringResource(R.string.contact_details_no_phone_numbers),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else {
-            contact.phoneNumbers.forEach { number ->
-                PhoneNumberItem(
-                    number = number,
-                    onDialClick = { onPhoneNumberClick(number) }
-                )
                 Spacer(modifier = Modifier.height(SpaceSmall))
+
+                // Avatar
+                ContactAvatar(
+                    displayName = contact.displayName.ifBlank { stringResource(R.string.contacts_unnamed) },
+                    size = ContactAvatarLarge
+                )
+
+                Spacer(modifier = Modifier.height(SpaceMedium))
+
+                // Name
+                Text(
+                    text = contact.displayName.ifBlank { stringResource(R.string.contacts_unnamed) },
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    ),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(SpaceSmall))
+
+                // Saved status badge
+                Surface(
+                    color = Color.White.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color(0xFF34D399),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Saved in contacts",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White
+                        )
+                    }
+                }
             }
+        }
+
+        // Quick Action Panel
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = SpaceMedium)
+                .offset(y = (-16).dp),
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 4.dp,
+            shadowElevation = 4.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = SpaceSmall),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val firstNumber = contact.phoneNumbers.firstOrNull() ?: ""
+                QuickActionButton(
+                    icon = Icons.Default.Call,
+                    label = "Call",
+                    contentDesc = "Call contact",
+                    enabled = firstNumber.isNotBlank(),
+                    onClick = { onPhoneNumberClick(firstNumber) }
+                )
+
+                QuickActionButton(
+                    icon = if (uiState.isFavourite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                    label = "Favourite",
+                    contentDesc = if (uiState.isFavourite) "Remove favourite" else "Add favourite",
+                    tint = if (uiState.isFavourite) Color(0xFFFBBF24) else MaterialTheme.colorScheme.primary,
+                    onClick = onFavouriteClick
+                )
+
+                QuickActionButton(
+                    icon = Icons.Default.Edit,
+                    label = "Edit",
+                    contentDesc = "Edit contact",
+                    onClick = onEditContactClick
+                )
+
+                QuickActionButton(
+                    icon = Icons.Default.Psychology,
+                    label = "Relationship",
+                    contentDesc = "Relationship details",
+                    onClick = onManageRelationship
+                )
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = SpaceMedium),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // 1. Phone Numbers Section
+            Text(
+                text = stringResource(R.string.contact_details_phone_numbers),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { heading() },
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(SpaceSmall))
+
+            if (contact.phoneNumbers.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.contact_details_no_phone_numbers),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                contact.phoneNumbers.forEach { number ->
+                    PhoneNumberCard(
+                        number = number,
+                        onDialClick = { onPhoneNumberClick(number) },
+                        onCopyClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("phone_number", number)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(SpaceSmall))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(SpaceMedium))
+
+            // 2. Relationship Health Card
+            uiState.health?.let { health ->
+                RelationshipHealthCard(health = health)
+                Spacer(modifier = Modifier.height(SpaceMedium))
+            }
+
+            // 3. Memory Replay / Why Do I Know Card
+            uiState.memoryReplay?.let { replay ->
+                MemoryReplayCard(replay = replay)
+                Spacer(modifier = Modifier.height(SpaceMedium))
+            }
+
+            // 4. AI Relationship Memory / Facts Section
+            AiFactsSection(
+                facts = uiState.facts,
+                onAddFactClick = { showAddFactDialog = true },
+                onDeleteFact = onDeleteFact
+            )
+
+            Spacer(modifier = Modifier.height(SpaceMedium))
+
+            // 5. Conversation Intelligence Analyzer
+            ConversationAnalyzerCard(
+                noteText = noteInputForAnalysis,
+                onNoteTextChange = { noteInputForAnalysis = it },
+                isAnalyzing = uiState.isAnalyzingConversation,
+                onAnalyze = { 
+                    if (noteInputForAnalysis.isNotBlank()) {
+                        onAnalyzeConversation(noteInputForAnalysis)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(SpaceMedium))
+
+            // 6. Relationship Summary Card
+            KontactCard(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onManageRelationship
+            ) {
+                Column(modifier = Modifier.padding(SpaceMedium)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.relationship_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Icon(
+                            imageVector = Icons.Default.Edit, 
+                            contentDescription = "Edit relationship details", 
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    
+                    if (uiState.relationship?.privateNote?.isNotBlank() == true) {
+                        Spacer(modifier = Modifier.height(SpaceSmall))
+                        Text(
+                            text = uiState.relationship.privateNote,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    if (uiState.relationship?.tags?.isNotEmpty() == true) {
+                        Spacer(modifier = Modifier.height(SpaceSmall))
+                        Text(
+                            text = uiState.relationship.tags.joinToString { it.name },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(SpaceMedium))
+
+            // 7. Unified Timeline
+            if (uiState.timeline.isNotEmpty()) {
+                RelationshipTimelineSection(timeline = uiState.timeline)
+                Spacer(modifier = Modifier.height(SpaceMedium))
+            }
+
+            Spacer(modifier = Modifier.height(SpaceLarge))
         }
     }
 
@@ -276,6 +418,100 @@ private fun SuccessState(
                 showAddFactDialog = false
             }
         )
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    contentDesc: String,
+    enabled: Boolean = true,
+    tint: Color = MaterialTheme.colorScheme.primary,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .size(64.dp, 64.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics {
+                contentDescription = contentDesc
+                role = Role.Button
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (enabled) tint else MaterialTheme.colorScheme.outline,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+            fontSize = 11.sp
+        )
+    }
+}
+
+@Composable
+private fun PhoneNumberCard(
+    number: String,
+    onDialClick: () -> Unit,
+    onCopyClick: () -> Unit
+) {
+    KontactCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(SpaceMedium)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = number,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "Tap Call to open keypad",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            IconButton(
+                onClick = onCopyClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "Copy number",
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            IconButton(
+                onClick = onDialClick,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Call,
+                    contentDescription = "Call $number",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
     }
 }
 
@@ -400,7 +636,10 @@ private fun AiFactsSection(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                IconButton(onClick = onAddFactClick) {
+                IconButton(
+                    onClick = onAddFactClick,
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(imageVector = Icons.Default.Add, contentDescription = "Add Fact")
                 }
             }
@@ -426,7 +665,10 @@ private fun AiFactsSection(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
-                        IconButton(onClick = { onDeleteFact(fact.id) }, modifier = Modifier.size(24.dp)) {
+                        IconButton(
+                            onClick = { onDeleteFact(fact.id) },
+                            modifier = Modifier.size(48.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = "Delete Fact",
@@ -552,7 +794,7 @@ private fun AddFactDialog(
                 Spacer(modifier = Modifier.height(SpaceMedium))
                 Text("Category:", style = MaterialTheme.typography.labelLarge)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    FactCategory.values().forEach { category ->
+                    FactCategory.entries.forEach { category ->
                         FilterChip(
                             selected = selectedCategory == category,
                             onClick = { selectedCategory = category },
@@ -578,52 +820,18 @@ private fun AddFactDialog(
     )
 }
 
-@Composable
-private fun PhoneNumberItem(
-    number: String,
-    onDialClick: () -> Unit
-) {
-    KontactCard(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onDialClick
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(SpaceMedium)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = number,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = stringResource(R.string.contact_details_open_dialer),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            Icon(
-                imageVector = Icons.Default.Call,
-                contentDescription = "Call $number",
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun ContactDetailsSuccessPreview() {
     KontactPlusTheme {
         ContactDetailsScreen(
             uiState = ContactDetailsUiState.Success(
-                Contact(1, "k1", "Akash Patel", listOf("1234567890", "0987654321"))
+                Contact(1, "k1", "Akash Yadav", listOf("1234567890", "7564817434"))
             ),
             onBackClick = {},
             onPhoneNumberClick = {},
             onFavouriteClick = {},
+            onEditContactClick = {},
             onManageRelationship = {},
             onRetry = {}
         )

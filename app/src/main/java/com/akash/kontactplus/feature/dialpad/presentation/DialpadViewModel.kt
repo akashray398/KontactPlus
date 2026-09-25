@@ -29,11 +29,25 @@ class DialpadViewModel @Inject constructor(
 
     private var suggestionsJob: Job? = null
 
+    private var dialableNumber: String
+        get() = savedStateHandle.get<String>(KEY_DIALABLE_NUMBER) ?: ""
+        set(value) {
+            savedStateHandle[KEY_DIALABLE_NUMBER] = value
+        }
+
     private var hasRequestedCallPermission: Boolean
         get() = savedStateHandle.get<Boolean>(KEY_HAS_REQUESTED_PERMISSION) ?: false
         set(value) {
             savedStateHandle[KEY_HAS_REQUESTED_PERMISSION] = value
         }
+
+    init {
+        val argNumber = savedStateHandle.get<String>("number")
+        val numberToSet = if (!argNumber.isNullOrBlank()) argNumber else dialableNumber
+        if (numberToSet.isNotEmpty()) {
+            updateNumber(normalizeDialableNumberUseCase(numberToSet))
+        }
+    }
 
     fun onKeyPressed(key: DialpadKey) {
         if (_uiState.value.dialableNumber.length >= MAX_NUMBER_LENGTH) {
@@ -69,7 +83,7 @@ class DialpadViewModel @Inject constructor(
     }
 
     fun onExternalNumberReceived(number: String?) {
-        if (number != null) {
+        if (!number.isNullOrBlank()) {
             updateNumber(normalizeDialableNumberUseCase(number))
         }
     }
@@ -109,6 +123,7 @@ class DialpadViewModel @Inject constructor(
     }
 
     private fun updateNumber(number: String) {
+        dialableNumber = number
         _uiState.update { 
             it.copy(
                 dialableNumber = number,
@@ -137,6 +152,7 @@ class DialpadViewModel @Inject constructor(
 
     companion object {
         private const val MAX_NUMBER_LENGTH = 31
+        private const val KEY_DIALABLE_NUMBER = "key_dialable_number"
         private const val KEY_HAS_REQUESTED_PERMISSION = "has_requested_call_permission"
     }
 }

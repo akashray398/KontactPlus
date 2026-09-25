@@ -8,7 +8,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.akash.kontactplus.app.KontactPlusApp
 import com.akash.kontactplus.core.designsystem.theme.KontactPlusTheme
 import com.akash.kontactplus.core.telecom.DialIntentHandler
@@ -30,6 +33,8 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var aiRepository: AiRepository
 
+    private val mainViewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -39,7 +44,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            KontactPlusTheme {
+            val themeMode by mainViewModel.themeMode.collectAsStateWithLifecycle()
+
+            KontactPlusTheme(themeMode = themeMode) {
                 KontactPlusApp(
                     telecomRoleManager = telecomRoleManager,
                     dialIntentHandler = dialIntentHandler,

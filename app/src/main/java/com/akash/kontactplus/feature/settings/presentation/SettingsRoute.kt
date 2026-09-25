@@ -15,11 +15,15 @@ fun SettingsRoute(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val isDemoModeEnabled by viewModel.isDemoModeEnabled.collectAsStateWithLifecycle()
 
     SettingsScreen(
+        themeMode = themeMode,
+        onThemeModeChange = viewModel::setThemeMode,
         isDemoModeEnabled = isDemoModeEnabled,
         onDemoModeToggle = viewModel::toggleDemoMode,
+        onClearRelationshipData = viewModel::clearLocalRelationshipData,
         onNavigateToInsights = onNavigateToInsights,
         onNavigateToPrivacy = onNavigateToPrivacy,
         onNavigateToAiPrivacy = onNavigateToAiPrivacy,
