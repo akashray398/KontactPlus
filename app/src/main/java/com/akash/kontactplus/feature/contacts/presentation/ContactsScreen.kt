@@ -39,6 +39,7 @@ fun ContactsScreen(
     onSortOrderChanged: (ContactSortOrder) -> Unit,
     onContactClick: (String) -> Unit,
     onDismissSetupCard: () -> Unit,
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToDialpad: () -> Unit,
     onNavigateToRecents: () -> Unit,
     onNavigateToAi: () -> Unit,
@@ -114,6 +115,7 @@ fun ContactsScreen(
                     onSortOrderChanged = onSortOrderChanged,
                     onContactClick = onContactClick,
                     onDismissSetupCard = onDismissSetupCard,
+                    onNavigateToProfile = onNavigateToProfile,
                     onNavigateToDialpad = onNavigateToDialpad,
                     onNavigateToRecents = onNavigateToRecents,
                     onNavigateToAi = onNavigateToAi,
@@ -133,17 +135,19 @@ private fun GrantedContent(
     onSortOrderChanged: (ContactSortOrder) -> Unit,
     onContactClick: (String) -> Unit,
     onDismissSetupCard: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onNavigateToDialpad: () -> Unit,
     onNavigateToRecents: () -> Unit,
     onNavigateToAi: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(SpaceSmall))
-        Text(
-            text = stringResource(R.string.title_contacts),
-            style = MaterialTheme.typography.headlineLarge,
-            modifier = Modifier.semantics { heading() }
+        KontactTopAppBar(
+            title = stringResource(R.string.title_contacts),
+            subtitle = "Connect Smarter • Remember Better",
+            onProfileClick = onNavigateToProfile,
+            onAiToolsClick = onNavigateToAi,
+            onSettingsClick = onNavigateToSettings
         )
         
         if (uiState.showSetupCard) {

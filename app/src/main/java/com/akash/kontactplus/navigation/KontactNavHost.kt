@@ -68,6 +68,9 @@ fun KontactNavHost(
                     val encodedKey = Uri.encode(lookupKey)
                     navController.navigate("contact/$encodedKey")
                 },
+                onNavigateToProfile = {
+                    navController.navigate("profile")
+                },
                 onNavigateToDialpad = {
                     navController.navigate(KontactDestination.Dialpad.route) {
                         launchSingleTop = true
