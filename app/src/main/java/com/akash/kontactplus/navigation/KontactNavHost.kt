@@ -168,11 +168,22 @@ fun KontactNavHost(
 
         composable(route = "settings") {
             SettingsRoute(
+                onNavigateToProfile = { navController.navigate("profile") },
                 onNavigateToInsights = { navController.navigate("settings/insights") },
                 onNavigateToPrivacy = { navController.navigate("settings/privacy") },
-                onNavigateToAiPrivacy = { /* AI Privacy dialog or screen */ },
-                 onOnboardingReplayed = { navController.navigate("onboarding") },
+                onNavigateToAiPrivacy = { navController.navigate("settings/privacy") },
+                onOnboardingReplayed = { navController.navigate("onboarding") },
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = "profile") {
+            com.akash.kontactplus.feature.profile.presentation.UserProfileRoute(
+                onBackClick = { navController.popBackStack() },
+                onSettingsClick = { navController.navigate("settings") },
+                onNavigateToAiTools = { navController.navigate("ai_tools") },
+                onNavigateToInsights = { navController.navigate("settings/insights") },
+                onNavigateToPrivacy = { navController.navigate("settings/privacy") }
             )
         }
 

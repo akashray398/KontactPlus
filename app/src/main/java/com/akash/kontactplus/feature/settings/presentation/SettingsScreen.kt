@@ -34,6 +34,7 @@ fun SettingsScreen(
     isDemoModeEnabled: Boolean,
     onDemoModeToggle: (Boolean) -> Unit,
     onClearRelationshipData: () -> Unit,
+    onNavigateToProfile: () -> Unit = {},
     onNavigateToInsights: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
     onNavigateToAiPrivacy: () -> Unit,
@@ -72,7 +73,17 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
-            // 1. Appearance / Theme
+            // 1. Account & Profile
+            SettingsCategory(title = "Account & Intelligence Profile")
+            SettingsItem(
+                title = "My Relationship Profile",
+                icon = Icons.Default.AccountCircle,
+                onClick = onNavigateToProfile
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // 2. Appearance / Theme
             SettingsCategory(title = stringResource(R.string.settings_appearance))
             Text(
                 text = stringResource(R.string.settings_theme),
@@ -107,7 +118,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 2. Phone & Permissions
+            // 3. Phone & Permissions
             SettingsCategory(title = stringResource(R.string.settings_phone_permissions))
             SettingsItem(
                 title = stringResource(R.string.connection_insights_title),
@@ -122,7 +133,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 3. Privacy
+            // 4. Privacy
             SettingsCategory(title = stringResource(R.string.settings_privacy_group))
             SettingsItem(
                 title = "Privacy Center",
@@ -142,7 +153,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 4. Education & Onboarding
+            // 5. Education & Onboarding
             SettingsCategory(title = "Education")
             SettingsItem(
                 title = "Replay Onboarding",
@@ -152,7 +163,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 5. Contact & Support
+            // 6. Contact & Support
             SettingsCategory(title = stringResource(R.string.settings_support_group))
             SettingsItem(
                 title = stringResource(R.string.settings_contact_developer),
@@ -172,7 +183,7 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            // 6. About
+            // 7. About
             SettingsCategory(title = "About")
             SettingsItem(
                 title = "About Kontact++",

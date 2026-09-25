@@ -7,6 +7,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SettingsRoute(
+    onNavigateToProfile: () -> Unit,
     onNavigateToInsights: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
     onNavigateToAiPrivacy: () -> Unit,
@@ -24,6 +25,7 @@ fun SettingsRoute(
         isDemoModeEnabled = isDemoModeEnabled,
         onDemoModeToggle = viewModel::toggleDemoMode,
         onClearRelationshipData = viewModel::clearLocalRelationshipData,
+        onNavigateToProfile = onNavigateToProfile,
         onNavigateToInsights = onNavigateToInsights,
         onNavigateToPrivacy = onNavigateToPrivacy,
         onNavigateToAiPrivacy = onNavigateToAiPrivacy,
